@@ -9,6 +9,7 @@ Detecta invariantes de 3 fases:
     sólido nuevo con L presente => peritéctico), robusto entre isotermas.
 """
 import math
+import itertools
 from .gibbs import R, clip, mix_entropy
 
 
@@ -99,29 +100,49 @@ def find_invariants(phases, T, n=400, tol=1e-7):
     return out
 
 
+def _seg_at(H, x):
+    if x <= H[0][0]: return H[0], H[0]
+    if x >= H[-1][0]: return H[-1], H[-1]
+    for a, b in zip(H, H[1:]):
+        if a[0] <= x <= b[0]: return a, b
+    return H[-1], H[-1]
+
+
+def _margin(phases, b, a, c, T, n):
+    pts = sorted([(x, g, k) for k in (a, c) for (x, g) in sample_phase(phases[k], T, n)])
+    best = {}
+    for (x, g, k) in pts:
+        if x not in best or g < best[x][1]: best[x] = (x, g, k)
+    H = _hull([best[x] for x in sorted(best)])
+    bm = None
+    for (x, g) in sample_phase(phases[b], T, n):
+        p, q = _seg_at(H, x)
+        if p[2] == q[2] or not (p[0] < x < q[0]): continue
+        t = (x - p[0]) / (q[0] - p[0]); m = g - (p[1] + t * (q[1] - p[1]))
+        if bm is None or m < bm[0]: bm = (m, x)
+    return bm
+
+
 def scan_multi(phases, Tmin, Tmax, rows=240, n=400):
-    dT = (Tmax - Tmin) / (rows - 1)
-    rows_out = []
-    sig = {}
+    dT = (Tmax - Tmin) / (rows - 1); inv = []; rows_out = []
     for r in range(rows):
         T = Tmax - r * dT
         segs, H = equilibrium_multi(phases, T, n)
         rows_out.append((T, segs))
-        for a, b, c in zip(H, H[1:], H[2:]):
-            if len({a[2], b[2], c[2]}) < 3:
-                continue
-            cross = (b[0]-a[0])*(c[1]-a[1]) - (b[1]-a[1])*(c[0]-a[0])
-            sig.setdefault((a[2], b[2], c[2]), []).append((T, abs(cross), a[0], c[0]))
-    inv = []
-    for key, vals in sig.items():
-        if len(vals) < 3:
-            continue
-        crosses = [v[1] for v in vals]
-        imin = min(range(len(vals)), key=lambda k: crosses[k])
-        if max(crosses) > 0 and crosses[imin] < 0.05 * max(crosses):
-            T, _, x0, x1 = vals[imin]
-            la, lb, lc = (_lab(phases[key[0]]), _lab(phases[key[1]]), _lab(phases[key[2]]))
-            kind = "eutectico" if lb == "L" else ("peritectico" if "L" in (la, lc) else "solido")
-            inv.append({"T": T, "kind": kind, "phases": (la, lb, lc), "x0": x0, "x1": x1})
+    for b in range(len(phases)):
+        for a, c in itertools.combinations([k for k in range(len(phases)) if k != b], 2):
+            prev = None; prevT = None
+            for (T, segs) in rows_out:
+                bm = _margin(phases, b, a, c, T, n); m = bm[0] if bm else 1e9
+                if prev is not None and (prev > 0) != (m > 0) and bm:
+                    f = prev / (prev - m); Ti = prevT + f * (T - prevT)
+                    la, lb, lc = _lab(phases[a]), _lab(phases[b]), _lab(phases[c])
+                    kind = "eutectico" if lb == "L" else ("peritectico" if "L" in (la, lc) else "solido")
+                    inv.append({"T": Ti, "kind": kind, "phases": tuple(sorted((la, lc))) + (lb,), "x": bm[1]})
+                prev = m; prevT = T
     inv.sort(key=lambda d: -d["T"])
-    return {"rows": rows_out, "invariants": inv, "Tmin": Tmin, "Tmax": Tmax}
+    out = []
+    for iv in inv:
+        if not out or iv["phases"] != out[-1]["phases"] or abs(iv["T"] - out[-1]["T"]) > 20:
+            out.append(iv)
+    return {"rows": rows_out, "invariants": out, "Tmin": Tmin, "Tmax": Tmax}
