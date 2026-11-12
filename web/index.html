@@ -252,6 +252,7 @@ footer a{color:var(--teal);text-decoration:none} footer a:hover{text-decoration:
 .reveal.in{opacity:1;transform:none}
 
 @media (max-width:1280px){
+  .controls{position:static;max-height:none;overflow:visible}
   .lab-grid{grid-template-columns:262px minmax(0,1fr)}
   .side-col{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;align-items:start}
   .eq-grid{grid-template-columns:1fr 1fr}
@@ -301,6 +302,7 @@ footer a{color:var(--teal);text-decoration:none} footer a:hover{text-decoration:
     <a href="#lab" class="nav-link active" data-spy="lab">Laboratorio</a>
     <a href="#modelo" class="nav-link" data-spy="modelo">Modelo y límites</a>
     <a href="#repo" class="nav-link" data-spy="repo">Repositorio</a>
+    <a href="multifase.html" class="nav-link">Multifase ↗</a>
   </nav>
   <div class="top-actions">
     <button id="soundBtn" class="sound-btn" aria-pressed="true" title="Silencia o activa todos los sonidos">
