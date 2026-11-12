@@ -1,4 +1,4 @@
-# PHASEMAP
+# PHASEMAP ⚗️
 
 [![tests](https://github.com/amurlaniakea/phasemap/actions/workflows/tests.yml/badge.svg)](https://github.com/amurlaniakea/phasemap/actions/workflows/tests.yml)
 [![pages](https://github.com/amurlaniakea/phasemap/actions/workflows/pages.yml/badge.svg)](https://amurlaniakea.github.io/phasemap/)
@@ -50,4 +50,4 @@ binodal/espinodal, Wagner/IAPWS, Clausius-Clapeyron. Limites: docs/limits.md.
 
 ## Licencia
 
-AGPL-3.0-or-later · Pedro Sordo Martínez · serie Orbitae / Relmap / Phasemap.
+AGPL-3.0-or-later · Pedro Sordo Martínez <amurlaniakea@gmail.com> · serie Orbitae / Relmap / Phasemap.
