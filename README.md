@@ -1,5 +1,11 @@
 # PHASEMAP
 
+[![tests](https://github.com/amurlaniakea/phasemap/actions/workflows/tests.yml/badge.svg)](https://github.com/amurlaniakea/phasemap/actions/workflows/tests.yml)
+[![pages](https://github.com/amurlaniakea/phasemap/actions/workflows/pages.yml/badge.svg)](https://amurlaniakea.github.io/phasemap/)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
+
+**Visor en vivo:** <https://amurlaniakea.github.io/phasemap/>
+
 **Diagramas de fase verificables** — solucion regular, Redlich-Kister e IAPWS.
 Nucleo Python stdlib (cero dependencias), suite pytest analitica y visor web Canvas.
 Serie cientifica: **Orbitae · Relmap · Phasemap**.
