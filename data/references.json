@@ -1,0 +1,47 @@
+{
+  "constants": {
+    "R_J_mol_K": 8.314462618,
+    "H2O_triple": [
+      273.16,
+      611.657
+    ],
+    "H2O_critical": [
+      647.096,
+      22064000.0
+    ]
+  },
+  "H2O_triple_points": [
+    {
+      "name": "Ih-liquido-vapor",
+      "T_K": 273.16,
+      "P_Pa": 611.657
+    },
+    {
+      "name": "Ih-III-liquido",
+      "T_K": 251.165,
+      "P_Pa": 208566000.0
+    },
+    {
+      "name": "III-V-liquido",
+      "T_K": 256.164,
+      "P_Pa": 350100000.0
+    },
+    {
+      "name": "V-VI-liquido",
+      "T_K": 273.31,
+      "P_Pa": 632400000.0
+    },
+    {
+      "name": "VI-VII-liquido",
+      "T_K": 355.0,
+      "P_Pa": 2216000000.0
+    }
+  ],
+  "sources": [
+    "Wagner & Pruss (2002), J. Phys. Chem. Ref. Data 31, 387 (IAPWS-95)",
+    "IAPWS R14-08 (2011), melting & sublimation curves of ordinary water",
+    "Datchi, Loubeyre & LeToullec (2000), Phys. Rev. B 61, 6535 (hielo VII)",
+    "Massalski, Binary Alloy Phase Diagrams, ASM International (Pb-Sn, Cu-Ni)",
+    "Bragg & Williams (1934); Redlich & Kister (1948); Simon & Glatzel (1929)"
+  ]
+}
