@@ -348,7 +348,7 @@ footer a{color:var(--teal);text-decoration:none} footer a:hover{text-decoration:
           <select id="presetSel">
             <option value="pbsn">Pb–Sn · soldadura</option>
             <option value="cuni">Cu–Ni · isomorfo</option>
-            <option value="generic">Genérico A–B</option>
+            <option value="agcu">Ag–Cu · eutéctico</option><option value="generic">Genérico A–B</option>
             <option value="custom" hidden>Personalizado</option>
           </select>
         </div>
@@ -557,6 +557,8 @@ const fmtJ=v=>(v/1000).toFixed(2)+' kJ/mol';
 
 /* ---------------- paletas de regiones ---------------- */
 const REG={
+  'L+α':{fill:'#2e8f77',ink:'#7fe8c8',name:'α + Líquido',desc:'Zona bifásica α+L.',hatch:true},
+  'β+L':{fill:'#5f5fc9',ink:'#b9b3ff',name:'Líquido + β',desc:'Zona bifásica L+β.',hatch:true},
   'L':{fill:'#2456c4',ink:'#8fc2ff',name:'Líquido (L)',desc:'Fase líquida homogénea: una sola fase, F = 2 a P fija.'},
   'α':{fill:'#c77d1f',ink:'#ffd08a',name:'Sólido α (rico en A)',desc:'Solución sólida terminal rica en A. Solubilidad limitada por la solvus.'},
   'β':{fill:'#b04a9e',ink:'#ff9ade',name:'Sólido β (rico en B)',desc:'Solución sólida terminal rica en B.'},
@@ -581,6 +583,8 @@ const FREQ={'L':740,'α':523,'β':622,'α+L':440,'L+β':560,'α+β':392,'meta':4
 
 /* ---------------- presets y estado ---------------- */
 const PRESETS={
+  agcu:{name:'Ag–Cu',A:'Ag',B:'Cu',params:{TmA:1234.9,TmB:1357.8,dHfA:11300,dHfB:13260,L0:16000,L1:0,omL:7000},
+    ref:{Te:1052.0,xe:0.399,solA:0.141,solB:0.049,note:'Eutéctico real 779 C, 28.1 wt% Cu. Modelo de una red: desviación declarada.'}},
   pbsn:{name:'Pb–Sn',A:'Pb',B:'Sn',params:{TmA:600.6,TmB:505.1,dHfA:4770,dHfB:7030,L0:8000,L1:6000,omL:4000},
     ref:{Te:456.15,xe:0.739,solA:0.293,solB:0.0145,note:'Eutéctico real: 456.15 K · 61.9 %wt Sn. La solución regular (incluso con L₁) no captura las dos redes cristalinas distintas: la desviación es esperable y se declara.'}},
   cuni:{name:'Cu–Ni',A:'Cu',B:'Ni',params:{TmA:1357.8,TmB:1728.3,dHfA:13260,dHfB:17480,L0:2000,L1:0,omL:-800},
@@ -662,7 +666,7 @@ function refineTie(m,s,T){
   }
   s.x0=x1;s.x1=x2;
 }
-const BCAT={'α|α+L':'solidus','α+L|α':'solidus','L+β|β':'solidus','β|β+L':'solidus','L+α|α':'solidus','α+L|L':'liquidus','L|α+L':'liquidus','L|L+β':'liquidus','L|L+α':'liquidus','β+L|L':'liquidus','α|α+β':'solvus','α+β|β':'solvus'};;
+const BCAT={'α|α+L':'solidus','α+L|α':'solidus','L+β|β':'solidus','β|β+L':'solidus','L+α|α':'solidus','α+L|L':'liquidus','L|α+L':'liquidus','L|L+β':'liquidus','L|L+α':'liquidus','β+L|L':'liquidus','α|α+β':'solvus','α+β|β':'solvus'};;;
 
 function computeBinary(){
   const p=state.params,m=makeModel(p);

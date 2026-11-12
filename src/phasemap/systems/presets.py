@@ -68,6 +68,14 @@ PRESETS = {
             "TmA_K": 1357.77, "TmB_K": 1728.3,
             "source": "ASM: sistema isomorfo, solubilidad total en solido y liquido",
         }),
+    "agcu": Preset(
+        key="agcu", name="Ag-Cu", A="Ag", B="Cu",
+        TmA=1234.9, TmB=1357.8, dHfA=11300.0, dHfB=13260.0,
+        L0=16000.0, L1=0.0, omL=7000.0,
+        reference={
+            "Te_K": 1052.0, "xE": 0.399, "solA": 0.141, "solB_Pb": 0.049,
+            "source": "ASM: eutectico 779 C, 28.1 wt% Cu",
+        }),
     "generic": Preset(
         key="generic", name="Generico A-B", A="A", B="B",
         TmA=1000.0, TmB=700.0, dHfA=10000.0, dHfB=8500.0,

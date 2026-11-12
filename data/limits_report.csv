@@ -6,6 +6,10 @@ Pb-Sn,solubilidad_max_A_en_beta,0.02,0.0145,37.92,DESVIADO,"Massalski, Binary Al
 Cu-Ni,eutectico,ausente,ausente (isomorfo),0,OK,"ASM: sistema isomorfo, solubilidad total en solido y liquido"
 Cu-Ni,T_fusion_Cu_K,1358,1358,0.00,OK,"ASM: sistema isomorfo, solubilidad total en solido y liquido"
 Cu-Ni,T_fusion_Ni_K,1728,1728,0.00,OK,"ASM: sistema isomorfo, solubilidad total en solido y liquido"
+Ag-Cu,T_eutectica_K,1055,1052,0.32,OK,"ASM: eutectico 779 C, 28.1 wt% Cu"
+Ag-Cu,x_eutectica,0.4258,0.399,6.72,APROX,"ASM: eutectico 779 C, 28.1 wt% Cu"
+Ag-Cu,solubilidad_max_B_en_alpha,0,0.141,100.00,DESVIADO,"ASM: eutectico 779 C, 28.1 wt% Cu"
+Ag-Cu,solubilidad_max_A_en_beta,0,0.049,100.00,DESVIADO,"ASM: eutectico 779 C, 28.1 wt% Cu"
 Generico A-B,T_eutectica_K,547.5,-,-,MODELO,Sistema didactico sin referencia experimental
 Generico A-B,x_eutectica,0.6512,-,-,MODELO,Sistema didactico sin referencia experimental
 Generico A-B,solubilidad_max_B_en_alpha,0.05807,-,-,MODELO,Sistema didactico sin referencia experimental
