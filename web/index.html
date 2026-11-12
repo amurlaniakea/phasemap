@@ -1,0 +1,1734 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PHASEMAP · Diagramas de fase verificables — serie científica</title>
+<meta name="description" content="Explorador interactivo de diagramas de fase: solución regular, Redlich–Kister, eutécticos, espinodales y agua P–T. Cero dependencias.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0A1322; --s1:#101E31; --s2:#152740; --s3:#1B3050;
+  --ink:#F2EAD9; --dim:#93A7C4; --wdim:#C9BFA8;
+  --blue:#4DA3FF; --cyan:#7FD4FF; --amber:#FFB020; --magenta:#E85BD0;
+  --acid:#A8E830; --red:#FF4D5E; --teal:#37C9A8; --violet:#8F7BFF;
+  --line:rgba(127,212,255,.14); --line2:rgba(127,212,255,.26);
+  --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Consolas,monospace;
+  --sans:'Space Grotesk',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font:15px/1.6 var(--sans);overflow-x:hidden}
+::selection{background:rgba(77,163,255,.35)}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:#0A1424}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#2a5f9e,#1f8a74);border-radius:6px;border:2px solid #0A1424}
+::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#4DA3FF,#37C9A8)}
+*{scrollbar-width:thin;scrollbar-color:#2a5f9e #0A1424}
+
+/* ---------- fondo por capas ---------- */
+.bg{position:fixed;inset:0;z-index:-1;overflow:hidden}
+.bg-aurora{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5;transition:filter 1.2s ease}
+.a1{width:60vw;height:60vw;left:-18vw;top:-22vw;background:radial-gradient(circle,#16386e 0%,transparent 65%);animation:drift1 26s ease-in-out infinite alternate}
+.a2{width:52vw;height:52vw;right:-16vw;top:22vh;background:radial-gradient(circle,#0e4a44 0%,transparent 65%);animation:drift2 32s ease-in-out infinite alternate}
+.a3{width:44vw;height:44vw;left:24vw;bottom:-24vw;background:radial-gradient(circle,#4a2a10 0%,transparent 65%);opacity:.32;animation:drift1 38s ease-in-out infinite alternate-reverse}
+body[data-sec="modelo"] .bg-aurora{filter:blur(90px) hue-rotate(38deg)}
+body[data-sec="repo"] .bg-aurora{filter:blur(90px) hue-rotate(-32deg)}
+@keyframes drift1{from{transform:translate(0,0) scale(1)}to{transform:translate(6vw,4vh) scale(1.12)}}
+@keyframes drift2{from{transform:translate(0,0) scale(1.08)}to{transform:translate(-5vw,-5vh) scale(.95)}}
+.bg-grid{position:absolute;inset:-100px 0 0 0;background:
+  repeating-linear-gradient(0deg,rgba(127,212,255,.045) 0 1px,transparent 1px 64px),
+  repeating-linear-gradient(90deg,rgba(127,212,255,.045) 0 1px,transparent 1px 64px)}
+.bg-grain{position:absolute;inset:0;opacity:.05;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ---------- cabecera fija ---------- */
+.top{position:fixed;top:0;left:0;right:0;height:64px;z-index:50;display:flex;align-items:center;gap:22px;padding:0 clamp(14px,3vw,34px);background:rgba(10,19,34,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line);animation:fadeDown .7s ease both}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
+.brand svg{flex:none}
+.brand-name{font:700 19px var(--sans);letter-spacing:.04em}
+.brand-name b{background:linear-gradient(90deg,var(--cyan),var(--magenta),var(--amber));-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand-sub{font:500 10px var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--dim);border-left:1px solid var(--line2);padding-left:10px}
+.nav{display:flex;gap:4px;margin-left:auto}
+.nav-link{font:500 11.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dim);text-decoration:none;padding:8px 12px;border-radius:8px;position:relative;transition:color .2s}
+.nav-link:hover{color:var(--ink)}
+.nav-link.active{color:var(--cyan)}
+.nav-link.active::after{content:"";position:absolute;left:12px;right:12px;bottom:2px;height:2px;border-radius:2px;background:linear-gradient(90deg,var(--blue),var(--teal))}
+.top-actions{display:flex;align-items:center;gap:10px}
+.sound-btn{display:flex;align-items:center;gap:7px;font:600 10.5px var(--mono);letter-spacing:.1em;color:var(--acid);background:rgba(168,232,48,.08);border:1px solid rgba(168,232,48,.35);border-radius:20px;padding:6px 12px;cursor:pointer;transition:all .2s}
+.sound-btn:hover{background:rgba(168,232,48,.16);transform:translateY(-1px)}
+.sound-btn.off{color:var(--dim);border-color:var(--line);background:rgba(147,167,196,.06)}
+.sound-btn .waves{transition:opacity .2s}
+.sound-btn.off .waves{opacity:0}
+.sound-btn.off .slash{opacity:1}
+.sound-btn .slash{opacity:0;transition:opacity .2s}
+.badge-license{font:600 10px var(--mono);letter-spacing:.12em;color:var(--amber);border:1px solid rgba(255,176,32,.4);border-radius:6px;padding:4px 8px;background:rgba(255,176,32,.07)}
+
+/* ---------- secciones ---------- */
+main{padding-top:64px}
+.section{scroll-margin-top:80px;max-width:1560px;margin:0 auto;padding:clamp(22px,4vw,52px) clamp(14px,3vw,34px)}
+.intro{max-width:860px;margin-bottom:26px}
+.eyebrow{font:600 11px var(--mono);letter-spacing:.24em;color:var(--teal);margin-bottom:12px}
+h1{font:700 clamp(30px,4.4vw,52px)/1.12 var(--sans);letter-spacing:-.015em;margin-bottom:14px}
+h1 em{font-style:normal;background:linear-gradient(92deg,var(--cyan) 5%,var(--magenta) 55%,var(--amber) 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{color:var(--dim);font-size:16px;max-width:720px}
+.intro-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.ichip{font:500 11px var(--mono);letter-spacing:.06em;color:var(--wdim);border:1px solid var(--line);border-radius:20px;padding:5px 12px;background:rgba(16,30,49,.6)}
+.ichip b{color:var(--cyan)}
+.sec-head{margin-bottom:22px}
+.sec-head h2{font:700 clamp(24px,3vw,34px) var(--sans);letter-spacing:-.01em}
+.sec-head p{color:var(--dim);max-width:760px;margin-top:8px}
+
+/* ---------- paneles instrumento ---------- */
+.panel{background:linear-gradient(160deg,#132441 0%,#0E1B2E 100%);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 44px rgba(2,8,20,.5);overflow:hidden}
+.panel-head{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.panel-head h2,.panel-head h3{font:600 11.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.led{width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal);animation:pulse 2.4s ease-in-out infinite}
+.led-amber{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+.led-magenta{background:var(--magenta);box-shadow:0 0 8px var(--magenta)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.dim{color:var(--dim)} .mono{font-family:var(--mono)}
+.hidden{display:none!important}
+
+/* ---------- rejilla del laboratorio ---------- */
+.lab-grid{display:grid;grid-template-columns:284px minmax(0,1fr) 342px;gap:16px;align-items:start}
+.stage-col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.side-col{display:flex;flex-direction:column;gap:14px;min-width:0}
+
+/* controles */
+.controls{position:sticky;top:80px;max-height:calc(100vh - 96px);overflow-y:auto}
+.controls-body{padding:14px 16px 18px;display:flex;flex-direction:column;gap:15px}
+.ctrl-group{display:flex;flex-direction:column;gap:7px}
+.ctrl-label{display:flex;justify-content:space-between;align-items:baseline;font:600 10.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.ctrl-label output{font:600 12px var(--mono);color:var(--ink);letter-spacing:0;text-transform:none}
+.seg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;background:#0B1626;border:1px solid var(--line);border-radius:10px;padding:4px}
+.seg button{font:600 10.5px var(--mono);letter-spacing:.02em;color:var(--dim);background:transparent;border:0;border-radius:7px;padding:8px 2px;cursor:pointer;transition:all .18s}
+.seg button:hover{color:var(--ink)}
+.seg button.active{color:#071322;background:linear-gradient(120deg,var(--cyan),var(--teal));box-shadow:0 3px 12px rgba(55,201,168,.35)}
+select{appearance:none;-webkit-appearance:none;font:500 13px var(--mono);color:var(--ink);background:#0B1626 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237FD4FF' fill='none' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 12px center;border:1px solid var(--line2);border-radius:9px;padding:9px 30px 9px 12px;cursor:pointer;transition:border-color .2s}
+select:hover,select:focus-visible{border-color:var(--cyan);outline:none}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:22px;background:transparent;cursor:pointer;--acc:var(--cyan)}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:3px;background:linear-gradient(90deg,var(--acc),rgba(147,167,196,.22))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;margin-top:-6px;background:#0B1626;border:2.5px solid var(--acc);box-shadow:0 0 0 0 transparent;transition:box-shadow .2s,transform .15s}
+input[type=range]:hover::-webkit-slider-thumb{box-shadow:0 0 12px var(--acc);transform:scale(1.12)}
+input[type=range]::-moz-range-track{height:4px;border-radius:3px;background:linear-gradient(90deg,var(--acc),rgba(147,167,196,.22))}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#0B1626;border:2.5px solid var(--acc)}
+input[type=range]:focus-visible{outline:2px solid var(--acc);outline-offset:4px;border-radius:4px}
+.acc-amber{--acc:var(--amber)} .acc-magenta{--acc:var(--magenta)} .acc-blue{--acc:var(--blue)}
+.acc-teal{--acc:var(--teal)} .acc-red{--acc:var(--red)} .acc-violet{--acc:var(--violet)}
+.ctrl-field{border:1px dashed var(--line2);border-radius:10px;padding:12px 12px 4px;display:flex;flex-direction:column;gap:11px}
+.ctrl-field legend{font:600 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--teal);padding:0 7px}
+.toggles{display:grid;grid-template-columns:1fr 1fr;gap:9px 12px}
+.tog{display:flex;align-items:center;gap:8px;font:500 11.5px var(--mono);color:var(--wdim);cursor:pointer;user-select:none}
+.switch{appearance:none;-webkit-appearance:none;flex:none;width:34px;height:19px;border-radius:12px;background:#1B3050;border:1px solid var(--line2);position:relative;cursor:pointer;transition:background .2s}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:var(--dim);transition:all .2s}
+.switch:checked{background:linear-gradient(90deg,#1f6f5c,#2a9d7f);border-color:var(--teal)}
+.switch:checked::after{left:17px;background:#EAFCE2}
+.switch:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.ctrl-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn{font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;border-radius:9px;padding:10px 8px;cursor:pointer;transition:all .18s;border:1px solid var(--line2);background:rgba(21,39,64,.7);color:var(--cyan)}
+.btn:hover{transform:translateY(-1px);border-color:var(--cyan);box-shadow:0 6px 16px rgba(77,163,255,.2)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:linear-gradient(120deg,var(--blue),var(--teal));color:#071322;border:0}
+.btn.primary:hover{box-shadow:0 6px 20px rgba(55,201,168,.4)}
+.btn.wide{grid-column:1/-1}
+.btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+
+/* escenario */
+.stage-chips{margin-left:auto;display:flex;gap:6px}
+.schip{font:600 11px var(--mono);color:var(--amber);background:rgba(255,176,32,.08);border:1px solid rgba(255,176,32,.3);border-radius:6px;padding:3px 8px;white-space:nowrap}
+.schip.b{color:var(--magenta);background:rgba(232,91,208,.08);border-color:rgba(232,91,208,.3)}
+.canvas-wrap{position:relative;height:clamp(360px,54vh,560px);background:#0B1626}
+.canvas-wrap.small{height:225px}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+canvas:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px}
+.tooltip{position:absolute;pointer-events:none;font:500 11px var(--mono);color:var(--ink);background:rgba(9,17,30,.94);border:1px solid var(--line2);border-radius:7px;padding:5px 9px;white-space:nowrap;transform:translate(-50%,-135%);opacity:0;transition:opacity .15s;z-index:5}
+.tooltip.show{opacity:1}
+.legend{display:flex;flex-wrap:wrap;gap:7px;padding:11px 14px;border-top:1px solid var(--line)}
+.lchip{display:flex;align-items:center;gap:7px;font:500 11px var(--mono);color:var(--wdim);background:rgba(11,22,38,.7);border:1px solid var(--line);border-radius:7px;padding:4px 10px;cursor:pointer;transition:all .18s}
+.lchip:hover{transform:translateY(-2px);border-color:var(--line2);color:var(--ink)}
+.lchip i{width:13px;height:13px;border-radius:4px;flex:none}
+.lchip i.hatch{background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.22) 0 2px,transparent 2px 5px)}
+.stage-hint{padding:8px 14px 12px;font:400 11px var(--mono);color:var(--dim);letter-spacing:.03em}
+.stage-hint b{color:var(--teal)}
+
+/* validación */
+.validation{display:flex;flex-wrap:wrap;gap:8px}
+.vbadge{display:flex;align-items:center;gap:8px;font:500 11px var(--mono);border-radius:9px;padding:8px 12px;border:1px solid rgba(168,232,48,.35);background:rgba(168,232,48,.06);color:var(--wdim);transition:all .2s}
+.vbadge b{color:var(--acid);font-weight:600}
+.vbadge.warn{border-color:rgba(255,176,32,.4);background:rgba(255,176,32,.06)}
+.vbadge.warn b{color:var(--amber)}
+.vbadge svg{flex:none}
+
+/* tarjeta de estado */
+.state-body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:12px}
+.state-phase{display:flex;align-items:center;gap:10px;font:700 22px var(--sans)}
+.state-phase .dot{width:12px;height:12px;border-radius:50%;flex:none;box-shadow:0 0 10px currentColor}
+.state-tag{font:600 9.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);border:1px solid var(--line2);border-radius:5px;padding:3px 7px;margin-left:auto}
+.state-tag.ok{color:var(--acid);border-color:rgba(168,232,48,.4)}
+.state-tag.warn{color:var(--amber);border-color:rgba(255,176,32,.4)}
+.state-tag.bad{color:var(--red);border-color:rgba(255,77,94,.4)}
+.state-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sg-cell{background:rgba(11,22,38,.65);border:1px solid var(--line);border-radius:9px;padding:8px 11px}
+.sg-cell .k{font:500 9.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.sg-cell .v{font:600 15px var(--mono);color:var(--ink);margin-top:2px}
+.lever{display:flex;height:26px;border-radius:8px;overflow:hidden;border:1px solid var(--line2)}
+.lever div{display:flex;align-items:center;justify-content:center;font:600 10.5px var(--mono);color:#071322;transition:width .25s ease;min-width:0;overflow:hidden;white-space:nowrap}
+.phase-table{width:100%;border-collapse:collapse;font:500 12px var(--mono)}
+.phase-table th{font:600 9.5px var(--mono);letter-spacing:.13em;text-transform:uppercase;color:var(--dim);text-align:left;padding:4px 6px;border-bottom:1px solid var(--line)}
+.phase-table td{padding:6px;border-bottom:1px solid rgba(127,212,255,.07);color:var(--wdim)}
+.phase-table td:first-child{color:var(--ink);font-weight:600}
+.mu-row{display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--line);font:500 11px var(--mono);color:var(--dim);flex-wrap:wrap}
+.mu-row b{color:var(--cyan);font-weight:600}
+.gtemp{margin-left:auto;font:600 12px var(--mono);color:var(--amber)}
+.kv{display:flex;justify-content:space-between;font:500 12px var(--mono);padding:5px 0;border-bottom:1px solid rgba(127,212,255,.07)}
+.kv span{color:var(--dim)} .kv b{color:var(--ink);font-weight:600}
+
+/* ---------- modelo / límites ---------- */
+.eq-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+.eq-card{padding:16px 18px}
+.eq-card h3{font:600 11px var(--mono);letter-spacing:.15em;text-transform:uppercase;color:var(--teal);margin-bottom:10px}
+.math{font:italic 500 17px Georgia,'Times New Roman',serif;color:var(--ink);line-height:1.9}
+.math sub,.math sup{font-size:11px}
+.math .op{font-style:normal;color:var(--cyan)}
+.eq-card p{font-size:12.5px;color:var(--dim);margin-top:8px}
+.limits-panel{padding:0}
+.limits-panel table{width:100%;border-collapse:collapse}
+.limits-panel th{font:600 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);text-align:left;padding:11px 16px;border-bottom:1px solid var(--line2);background:rgba(11,22,38,.5)}
+.limits-panel td{font:500 12.5px var(--mono);padding:10px 16px;border-bottom:1px solid rgba(127,212,255,.07);color:var(--wdim);vertical-align:top}
+.limits-panel td:first-child{color:var(--ink)}
+.dev{font-weight:600;border-radius:5px;padding:2px 7px}
+.dev.ok{color:var(--acid);background:rgba(168,232,48,.1)}
+.dev.mid{color:var(--amber);background:rgba(255,176,32,.1)}
+.dev.bad{color:var(--red);background:rgba(255,77,94,.1)}
+.limits-note{padding:13px 16px;font-size:12.5px;color:var(--dim)}
+.limits-note b{color:var(--amber)}
+.assumptions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.asmp{font:500 11px var(--mono);color:var(--wdim);border:1px dashed var(--line2);border-radius:8px;padding:6px 11px}
+.asmp b{color:var(--magenta)}
+
+/* ---------- repositorio ---------- */
+.repo-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:16px;align-items:start}
+.verdict{padding:20px 22px;border-left:3px solid var(--acid)}
+.verdict h3{font:700 19px var(--sans);margin-bottom:10px}
+.verdict h3 span{color:var(--acid)}
+.verdict p{font-size:13.5px;color:var(--dim);margin-bottom:9px}
+.verdict p b{color:var(--ink)}
+.tree-panel pre{font:500 12.5px/1.85 var(--mono);padding:16px 18px;overflow-x:auto;color:var(--wdim)}
+.tree-panel .d{color:var(--cyan);font-weight:600}
+.tree-panel .c{color:#5f7796}
+.tree-panel .f{color:var(--amber)}
+.roadmap{display:grid;grid-template-columns:repeat(5,1fr);gap:11px;margin-top:16px}
+.phase-card{padding:14px 15px;position:relative;transition:transform .2s}
+.phase-card:hover{transform:translateY(-3px)}
+.phase-card .num{font:700 11px var(--mono);color:var(--violet);letter-spacing:.14em}
+.phase-card h4{font:600 13.5px var(--sans);margin:6px 0 5px}
+.phase-card p{font-size:11.5px;color:var(--dim);line-height:1.5}
+.phase-card.now{border-color:rgba(168,232,48,.5);box-shadow:0 0 24px rgba(168,232,48,.12)}
+.phase-card.now .num{color:var(--acid)}
+.now-tag{position:absolute;top:10px;right:10px;font:600 9px var(--mono);letter-spacing:.1em;color:#071322;background:var(--acid);border-radius:4px;padding:2px 6px}
+.start-panel{margin-top:16px}
+.start-panel pre{font:500 12.5px/1.9 var(--mono);padding:15px 18px;color:var(--wdim);overflow-x:auto}
+.start-panel .c{color:#5f7796}
+.start-panel .g{color:var(--acid)}
+
+footer{border-top:1px solid var(--line);margin-top:30px;padding:26px clamp(14px,3vw,34px);display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;font:500 11.5px var(--mono);color:var(--dim)}
+footer .serie b{color:var(--cyan)} footer .serie em{font-style:normal;color:var(--magenta)}
+footer a{color:var(--teal);text-decoration:none} footer a:hover{text-decoration:underline}
+
+/* toasts */
+.toasts{position:fixed;right:18px;bottom:18px;z-index:90;display:flex;flex-direction:column;gap:9px;max-width:min(360px,86vw)}
+.toast{font:500 12px var(--mono);color:var(--ink);background:linear-gradient(160deg,#152740,#0E1B2E);border:1px solid var(--line2);border-left:3px solid var(--acid);border-radius:10px;padding:11px 14px;box-shadow:0 12px 30px rgba(2,8,20,.6);animation:toastIn .3s ease both}
+.toast.info{border-left-color:var(--blue)}
+.toast.warn{border-left-color:var(--amber)}
+@keyframes toastIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+.toast.out{animation:toastOut .3s ease both}
+@keyframes toastOut{to{opacity:0;transform:translateX(24px)}}
+
+/* revelado al hacer scroll */
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .7s ease,transform .7s ease;transition-delay:calc(var(--i,0)*90ms)}
+.reveal.in{opacity:1;transform:none}
+
+@media (max-width:1280px){
+  .lab-grid{grid-template-columns:262px minmax(0,1fr)}
+  .side-col{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;align-items:start}
+  .eq-grid{grid-template-columns:1fr 1fr}
+  .roadmap{grid-template-columns:repeat(3,1fr)}
+  .repo-grid{grid-template-columns:1fr}
+}
+@media (max-width:860px){
+  .brand-sub{display:none}
+  .nav{display:none}
+  .lab-grid{grid-template-columns:1fr}
+  .controls{position:static;max-height:none}
+  .side-col{grid-template-columns:1fr}
+  .canvas-wrap{height:340px}
+  .eq-grid{grid-template-columns:1fr}
+  .roadmap{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px}
+  .phase-card{min-width:210px;scroll-snap-align:start}
+  .stage-chips{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body data-sec="lab">
+
+<div class="bg" aria-hidden="true">
+  <div class="bg-aurora a1"></div><div class="bg-aurora a2"></div><div class="bg-aurora a3"></div>
+  <div class="bg-grid" id="bgGrid"></div><div class="bg-grain"></div>
+</div>
+
+<header class="top">
+  <a class="brand" href="#lab" aria-label="Phasemap — inicio">
+    <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true">
+      <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#7FD4FF"/><stop offset=".55" stop-color="#E85BD0"/><stop offset="1" stop-color="#FFB020"/>
+      </linearGradient></defs>
+      <rect x="1.5" y="1.5" width="27" height="27" rx="7" fill="#0B1626" stroke="url(#lg)" stroke-width="1.6"/>
+      <path d="M6 9 L15 21 L24 9" fill="none" stroke="#7FD4FF" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M6 21 H24" stroke="#A8E830" stroke-width="1.6" stroke-linecap="round"/>
+      <circle cx="15" cy="21" r="2.2" fill="#FFB020"/>
+    </svg>
+    <span class="brand-name">PHASE<b>MAP</b></span>
+    <span class="brand-sub">serie científica</span>
+  </a>
+  <nav class="nav" aria-label="Secciones">
+    <a href="#lab" class="nav-link active" data-spy="lab">Laboratorio</a>
+    <a href="#modelo" class="nav-link" data-spy="modelo">Modelo y límites</a>
+    <a href="#repo" class="nav-link" data-spy="repo">Repositorio</a>
+  </nav>
+  <div class="top-actions">
+    <button id="soundBtn" class="sound-btn" aria-pressed="true" title="Silencia o activa todos los sonidos">
+      <svg width="15" height="14" viewBox="0 0 15 14" aria-hidden="true">
+        <path d="M1 5h3l4-3.6v11.2L4 9H1z" fill="currentColor"/>
+        <path class="waves" d="M10 4.2c1.4 1.5 1.4 4.1 0 5.6M12 2.4c2.4 2.6 2.4 6.6 0 9.2" stroke="currentColor" fill="none" stroke-width="1.4" stroke-linecap="round"/>
+        <path class="slash" d="M2 1.5l11 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      <span id="soundLbl">SONIDO ON</span>
+    </button>
+    <span class="badge-license">AGPL-3.0</span>
+  </div>
+</header>
+
+<main>
+<!-- ==================== LABORATORIO ==================== -->
+<section id="lab" class="section">
+  <div class="intro reveal" style="--i:0">
+    <div class="eyebrow">TERMODINÁMICA COMPUTACIONAL · CERO DEPENDENCIAS · CANVAS PURO</div>
+    <h1>El equilibrio de fases, <em>tangible</em>.</h1>
+    <p class="lede">Energía libre de Gibbs, tangentes comunes y regla de la palanca — calculadas en vivo sobre solución regular y Redlich–Kister, con el agua de IAPWS como segundo sistema. Arrastra el punto de estado y mira responder a la materia.</p>
+    <div class="intro-chips">
+      <span class="ichip"><b>3</b> sistemas</span>
+      <span class="ichip"><b>0</b> dependencias JS</span>
+      <span class="ichip">validación <b>en vivo</b></span>
+      <span class="ichip">export <b>PNG · CSV · JSON</b></span>
+    </div>
+  </div>
+
+  <div class="lab-grid">
+    <!-- CONTROLES -->
+    <aside class="panel controls reveal" style="--i:1" aria-label="Controles del experimento">
+      <div class="panel-head"><span class="led led-amber"></span><h2>Controles</h2><span class="mono dim" id="ctrlMode" style="margin-left:auto;font-size:10px;letter-spacing:.14em">BINARIO</span></div>
+      <div class="controls-body">
+        <div class="ctrl-group">
+          <span class="ctrl-label">Sistema</span>
+          <div class="seg" id="modeSeg" role="tablist">
+            <button data-mode="eutectic" class="active" role="tab" aria-selected="true">Eutéctico</button>
+            <button data-mode="miscibility" role="tab" aria-selected="false">Lacuna</button>
+            <button data-mode="water" role="tab" aria-selected="false">Agua P–T</button>
+          </div>
+        </div>
+        <div class="ctrl-group" data-modes="eutectic">
+          <label class="ctrl-label" for="presetSel">Preset de aleación</label>
+          <select id="presetSel">
+            <option value="pbsn">Pb–Sn · soldadura</option>
+            <option value="cuni">Cu–Ni · isomorfo</option>
+            <option value="generic">Genérico A–B</option>
+            <option value="custom" hidden>Personalizado</option>
+          </select>
+        </div>
+        <div class="ctrl-group">
+          <label class="ctrl-label" for="TSlider">Temperatura <output id="TVal">—</output></label>
+          <input type="range" id="TSlider" class="acc-amber" step="0.5" aria-label="Temperatura">
+        </div>
+        <div class="ctrl-group" data-modes="eutectic miscibility">
+          <label class="ctrl-label" for="xSlider">Composición global x₀ <output id="xVal">—</output></label>
+          <input type="range" id="xSlider" class="acc-magenta" min="0" max="1" step="0.001" aria-label="Composición global">
+        </div>
+        <div class="ctrl-group" data-modes="water">
+          <label class="ctrl-label" for="PSlider">Presión · log₁₀ <output id="PVal">—</output></label>
+          <input type="range" id="PSlider" class="acc-blue" min="-1" max="10.3" step="0.01" aria-label="Presión logarítmica">
+        </div>
+        <div class="ctrl-group" data-modes="miscibility">
+          <label class="ctrl-label" for="omSlider">Ω · interacción <output id="omVal">—</output></label>
+          <input type="range" id="omSlider" class="acc-red" min="4000" max="40000" step="100" aria-label="Energía de interacción omega">
+        </div>
+        <fieldset class="ctrl-field" data-modes="eutectic">
+          <legend>Modelo · regular + RK</legend>
+          <div class="ctrl-group">
+            <label class="ctrl-label" for="L0Slider">L₀ sólido <output id="L0Val">—</output></label>
+            <input type="range" id="L0Slider" class="acc-teal" min="0" max="30000" step="100">
+          </div>
+          <div class="ctrl-group">
+            <label class="ctrl-label" for="L1Slider">L₁ asimetría <output id="L1Val">—</output></label>
+            <input type="range" id="L1Slider" class="acc-violet" min="-9000" max="9000" step="100">
+          </div>
+          <div class="ctrl-group">
+            <label class="ctrl-label" for="omLSlider">Ω líquido <output id="omLVal">—</output></label>
+            <input type="range" id="omLSlider" class="acc-blue" min="-3000" max="8000" step="100">
+          </div>
+          <div class="ctrl-group">
+            <label class="ctrl-label" for="TmASlider">T fusión A <output id="TmAVal">—</output></label>
+            <input type="range" id="TmASlider" class="acc-amber" min="400" max="1900" step="5">
+          </div>
+          <div class="ctrl-group">
+            <label class="ctrl-label" for="TmBSlider">T fusión B <output id="TmBVal">—</output></label>
+            <input type="range" id="TmBSlider" class="acc-amber" min="350" max="1900" step="5">
+          </div>
+        </fieldset>
+        <div class="toggles">
+          <label class="tog" data-modes="eutectic miscibility"><input type="checkbox" class="switch" id="togSpin" checked>Espinodal</label>
+          <label class="tog" data-modes="eutectic miscibility"><input type="checkbox" class="switch" id="togTie" checked>Reparto</label>
+          <label class="tog"><input type="checkbox" class="switch" id="togGrid" checked>Rejilla</label>
+          <label class="tog"><input type="checkbox" class="switch" id="togLabels" checked>Etiquetas</label>
+        </div>
+        <div class="ctrl-actions">
+          <button class="btn" id="resetBtn">↺ Reset</button>
+          <button class="btn" id="randBtn">⚄ Aleatorio</button>
+          <button class="btn wide" id="notableBtn" data-modes="water">◈ Punto notable ▸</button>
+          <button class="btn primary" id="pngBtn">▼ PNG</button>
+          <button class="btn" id="csvBtn">▼ CSV</button>
+          <button class="btn wide" id="copyBtn">⧉ Copiar estado JSON</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ESCENARIO -->
+    <div class="stage-col">
+      <div class="panel stage reveal" style="--i:2">
+        <div class="panel-head"><span class="led"></span><h2 id="stageTitle">Diagrama eutéctico binario · T–x</h2>
+          <div class="stage-chips"><span class="schip" id="chipT">—</span><span class="schip b" id="chipX">—</span></div>
+        </div>
+        <div class="canvas-wrap" id="mainWrap">
+          <canvas id="mainCanvas" tabindex="0" aria-label="Diagrama de fases interactivo. Arrastra o usa las flechas del teclado."></canvas>
+          <div class="tooltip" id="tooltip" role="status"></div>
+        </div>
+        <div class="legend" id="legend"></div>
+        <div class="stage-hint"><b>Arrastra</b> sobre el diagrama para mover el punto de estado · <b>flechas</b> ←→↑↓ ajuste fino (Shift = ×5) · clic en la leyenda = descripción</div>
+      </div>
+      <div class="validation reveal" style="--i:3" id="validation" aria-label="Validación numérica en vivo"></div>
+    </div>
+
+    <!-- COLUMNA LATERAL -->
+    <aside class="side-col">
+      <div class="panel reveal" style="--i:3" id="gPanel">
+        <div class="panel-head"><span class="led led-magenta"></span><h2 id="gTitle">G(x) · tangente común</h2><span class="gtemp" id="gTemp">—</span></div>
+        <div class="canvas-wrap small"><canvas id="gCanvas" aria-label="Curvas de energía libre de Gibbs"></canvas></div>
+        <div class="mu-row" id="muRow"></div>
+      </div>
+      <div class="panel reveal" style="--i:4" id="stateCard">
+        <div class="panel-head"><span class="led led-amber"></span><h2>Punto de estado</h2><span class="mono dim" style="margin-left:auto;font-size:10px" id="stateMode">T–x</span></div>
+        <div class="state-body" id="stateBody"></div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- ==================== MODELO Y LÍMITES ==================== -->
+<section id="modelo" class="section">
+  <div class="sec-head reveal"><div class="eyebrow">RIGOR VERIFICABLE</div>
+    <h2>Modelo y límites explícitos</h2>
+    <p>La misma filosofía que Orbitae: cada identidad termodinámica se comprueba en vivo, y cada desviación frente a la realidad se declara en una tabla. Nada se esconde detrás de una interpolación bonita.</p>
+  </div>
+  <div class="eq-grid">
+    <div class="panel eq-card reveal" style="--i:0"><h3>Energía de mezcla</h3>
+      <div class="math">g<sub>mix</sub> <span class="op">=</span> RT [x ln x <span class="op">+</span> (1−x) ln(1−x)] <span class="op">+</span> x(1−x)[L₀ <span class="op">+</span> L₁(2x−1)]</div>
+      <p>Solución regular de Bragg–Williams con el primer término de Redlich–Kister para asimetría. G = H − TS en cada fase.</p></div>
+    <div class="panel eq-card reveal" style="--i:1"><h3>Tangente común</h3>
+      <div class="math">μ<sub>A</sub><sup>α</sup> <span class="op">=</span> μ<sub>A</sub><sup>L</sup> ,&nbsp; μ<sub>B</sub><sup>α</sup> <span class="op">=</span> μ<sub>B</sub><sup>L</sup></div>
+      <p>Envolvente convexa sobre las curvas G(x) + refinamiento de Newton 2×2. Residual típico &lt; 10⁻⁷ J/mol.</p></div>
+    <div class="panel eq-card reveal" style="--i:2"><h3>Regla de la palanca</h3>
+      <div class="math">f<sub>α</sub> <span class="op">=</span> (x<sub>L</sub> − x₀) <span class="op">/</span> (x<sub>L</sub> − x<sub>α</sub>)</div>
+      <p>Fracciones molares de cada fase en equilibrio, conservando la materia: f<sub>α</sub> + f<sub>L</sub> = 1 exactamente.</p></div>
+    <div class="panel eq-card reveal" style="--i:0"><h3>Espinodal y punto crítico</h3>
+      <div class="math">∂²g/∂x² <span class="op">=</span> 0 &nbsp;⇒&nbsp; T<sub>c</sub> <span class="op">=</span> Ω / 2R</div>
+      <p>La frontera de inestabilidad intrínseca. Entre binodal y espinodal la fase es metaestable: nucleación, no descomposición espontánea.</p></div>
+    <div class="panel eq-card reveal" style="--i:1"><h3>Clausius–Clapeyron</h3>
+      <div class="math">dP/dT <span class="op">=</span> L / (T Δv)</div>
+      <p>Con la ecuación de Wagner (IAPWS) para el vapor del agua: L̂ = RT² · d ln P/dT reproduce los 40.66 kJ/mol de ebullición.</p></div>
+    <div class="panel eq-card reveal" style="--i:2"><h3>Regla de fases de Gibbs</h3>
+      <div class="math">F <span class="op">=</span> C − P <span class="op">+</span> 2</div>
+      <p>Condensada a P fija: F = C − P + 1. En el eutéctico coexisten 3 fases → F = 0: un punto invariante, y el visor lo marca.</p></div>
+  </div>
+  <div class="panel limits-panel reveal">
+    <div class="panel-head"><span class="led led-amber"></span><h3>Tabla de error y límites · <span id="limitsSys">Pb–Sn</span></h3><span class="mono dim" style="margin-left:auto;font-size:10px">modelo vs. referencia</span></div>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>Magnitud</th><th>Este modelo</th><th>Referencia real</th><th>Desviación</th></tr></thead>
+      <tbody id="limitsBody"></tbody>
+    </table></div>
+    <div class="limits-note" id="limitsNote"></div>
+  </div>
+  <div class="assumptions reveal">
+    <span class="asmp"><b>△</b> Ω independientes de T (sin entropía de exceso)</span>
+    <span class="asmp"><b>△</b> 3 fases: L, α, β — sin compuestos intermedios ni peritécticos</span>
+    <span class="asmp"><b>△</b> P fija = 1 atm en binarios (regla condensada)</span>
+    <span class="asmp"><b>△</b> Hielos III–VII: Simon–Glatzel anclado a puntos triples IAPWS</span>
+    <span class="asmp"><b>✗</b> Multicomponente CALPHAD / SGTE: fase futura del repo</span>
+  </div>
+</section>
+
+<!-- ==================== REPOSITORIO ==================== -->
+<section id="repo" class="section">
+  <div class="sec-head reveal"><div class="eyebrow">DE VISOR A REPOSITORIO</div>
+    <h2>Phasemap, pieza de la serie</h2>
+    <p>El puente natural entre la escala cuántica de Orbitae y la materia condensada macroscópica, con la misma estética y el mismo contrato de rigor que Relmap.</p>
+  </div>
+  <div class="repo-grid">
+    <div class="panel verdict reveal" style="--i:0">
+      <h3><span>Veredicto:</span> sí, y encaja como un guante.</h3>
+      <p><b>Viabilidad técnica:</b> el núcleo (envolvente convexa + Newton sobre potenciales químicos) cabe en ~300 líneas de Python con numpy. Lo que estás usando arriba es exactamente ese algoritmo, portado a JavaScript.</p>
+      <p><b>Validación barata y honesta:</b> palanca, regla de fases, T<sub>c</sub> = Ω/2R y Clausius–Clapeyron son checks analíticos en pytest — sin datasets externos para empezar.</p>
+      <p><b>Riesgo principal:</b> el alcance. Solución regular simétrica subestima el eutéctico real del Pb–Sn (la tabla de límites lo cuantifica en vivo). Empieza binario + agua; deja CALPHAD multicomponente para una fase posterior.</p>
+      <p><b>Licencia y espíritu:</b> AGPL-3.0, cero dependencias en el navegador, límites declarados. Este archivo ya es <span class="mono" style="color:var(--amber)">web/index.html</span>.</p>
+    </div>
+    <div class="panel tree-panel reveal" style="--i:1">
+      <div class="panel-head"><span class="led"></span><h3>Arquitectura propuesta</h3></div>
+<pre><span class="d">phasemap/</span>
+├── <span class="d">src/phasemap/</span>
+│   ├── <span class="d">core/</span>      <span class="c"># Gibbs, hull convexo, Newton μ, palanca</span>
+│   ├── <span class="d">models/</span>    <span class="c"># regular, Redlich–Kister, Wagner/IAPWS</span>
+│   └── <span class="d">systems/</span>   <span class="c"># Pb–Sn, Cu–Ni, H₂O, genérico A–B</span>
+├── <span class="d">tests/</span>         <span class="c"># pytest: palanca, Gibbs, C–C, T_c</span>
+├── <span class="d">web/</span>           <span class="f">index.html</span> <span class="c"># ← este visor, 0 deps</span>
+├── <span class="d">data/</span>          <span class="c"># CSV exportados + refs CALPHAD</span>
+├── <span class="d">docs/</span>          <span class="c"># teoría, límites, notebooks</span>
+├── <span class="f">README.md</span>      <span class="c"># estilo Orbitae</span>
+└── <span class="f">LICENSE</span>        <span class="c"># AGPL-3.0</span></pre>
+    </div>
+  </div>
+  <div class="roadmap">
+    <div class="panel phase-card reveal" style="--i:0"><div class="num">FASE 1</div><h4>Núcleo Python</h4><p>numpy + hull convexo + refinamiento de Newton. Sin scipy obligatorio.</p></div>
+    <div class="panel phase-card reveal" style="--i:1"><div class="num">FASE 2</div><h4>Suite pytest</h4><p>Identidades analíticas: palanca Σf=1, F=C−P+2, T_c=Ω/2R, Clausius–Clapeyron.</p></div>
+    <div class="panel phase-card now reveal" style="--i:2"><span class="now-tag">ESTÁS AQUÍ ✓</span><div class="num">FASE 3</div><h4>Visor web</h4><p>Este archivo: Canvas puro, 3 sistemas, validación en vivo, export PNG/CSV.</p></div>
+    <div class="panel phase-card reveal" style="--i:3"><div class="num">FASE 4</div><h4>Datos y límites</h4><p>Contraste sistemático vs. CALPHAD/SGTE y tablas de error por sistema.</p></div>
+    <div class="panel phase-card reveal" style="--i:4"><div class="num">FASE 5</div><h4>Publicación</h4><p>README estilo serie, GitHub Pages, DOI y licencia AGPL-3.0.</p></div>
+  </div>
+  <div class="panel start-panel reveal">
+    <div class="panel-head"><span class="led led-magenta"></span><h3>Arranque en 4 comandos</h3></div>
+<pre><span class="g">$</span> git init phasemap && cd phasemap
+<span class="g">$</span> mkdir -p src/phasemap/{core,models,systems} tests web data docs
+<span class="c"># guarda este archivo como web/index.html — la Fase 3 ya está hecha</span>
+<span class="g">$</span> python -m http.server 8000   <span class="c"># → http://localhost:8000/web/</span></pre>
+  </div>
+</section>
+</main>
+
+<footer>
+  <span class="serie"><b>PHASEMAP</b> · serie científica — Orbitae · Relmap · <em>Phasemap</em></span>
+  <span>modelos educativos con límites explícitos · AGPL-3.0 · <a href="https://github.com/amurlaniakea" target="_blank" rel="noopener">github.com/amurlaniakea</a></span>
+</footer>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+'use strict';
+/* ================================================================
+   PHASEMAP · web/index.html — visor de diagramas de fase, 0 deps
+   Núcleo: envolvente convexa + tangentes comunes (Newton 2×2)
+   ================================================================ */
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const R=8.314462618;
+const DPR=()=>Math.min(window.devicePixelRatio||1,2);
+if(!CanvasRenderingContext2D.prototype.roundRect){
+  CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){r=Math.min(r,w/2,h/2);
+    this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);
+    this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);this.closePath();return this;};
+}
+const fmtK=v=>v.toFixed(v<100?1:0)+' K';
+const fmtPa=p=>p<1e3?p.toFixed(p<10?2:0)+' Pa':p<1e6?(p/1e3).toFixed(1)+' kPa':p<1e9?(p/1e6).toFixed(2)+' MPa':(p/1e9).toFixed(2)+' GPa';
+const fmtSci=v=>{if(!isFinite(v))return'—';const e=Math.floor(Math.log10(Math.abs(v)||1));return (v/Math.pow(10,e)).toFixed(1)+'e'+e;};
+const fmtJ=v=>(v/1000).toFixed(2)+' kJ/mol';
+
+/* ---------------- paletas de regiones ---------------- */
+const REG={
+  'L':{fill:'#2456c4',ink:'#8fc2ff',name:'Líquido (L)',desc:'Fase líquida homogénea: una sola fase, F = 2 a P fija.'},
+  'α':{fill:'#c77d1f',ink:'#ffd08a',name:'Sólido α (rico en A)',desc:'Solución sólida terminal rica en A. Solubilidad limitada por la solvus.'},
+  'β':{fill:'#b04a9e',ink:'#ff9ade',name:'Sólido β (rico en B)',desc:'Solución sólida terminal rica en B.'},
+  'α+L':{fill:'#2e8f77',ink:'#7fe8c8',name:'α + Líquido',desc:'Zona bifásica: sólido α + líquido. Las fracciones siguen la regla de la palanca sobre la línea de reparto.',hatch:true},
+  'L+β':{fill:'#5f5fc9',ink:'#b9b3ff',name:'Líquido + β',desc:'Zona bifásica: líquido + sólido β. Al enfriar hasta la isoterma eutéctica, el líquido restante transforma a α+β.',hatch:true},
+  'α+β':{fill:'#c05a4a',ink:'#ffb0a3',name:'α + β',desc:'Mezcla bifásica de sólidos. Por debajo del eutéctico, todo líquido ha solidificado en esta microestructura.',hatch:true},
+  'meta':{fill:'#7d8f4f',ink:'#d6e89a',name:'Metaestable',desc:'Entre binodal y espinodal: la solución resiste pequeñas fluctuaciones; separa por nucleación y crecimiento.',hatch:true},
+  'unstable':{fill:'#b0453f',ink:'#ff9a94',name:'Inestable',desc:'Dentro de la espinodal (∂²g/∂x² < 0): descomposición espinodal espontánea, sin barrera de nucleación.',hatch:true}
+};
+const WREG={
+  'vapor':{fill:[39,74,99],ink:'#9fd8ff',name:'Vapor'},
+  'líquido':{fill:[31,86,201],ink:'#8fc2ff',name:'Líquido'},
+  'fluido supercrítico':{fill:[194,68,126],ink:'#ff9ad4',name:'Fluido supercrítico'},
+  'hielo Ih':{fill:[127,182,217],ink:'#dff2ff',name:'Hielo Ih'},
+  'hielo III':{fill:[63,143,168],ink:'#a8e4f2',name:'Hielo III'},
+  'hielo V':{fill:[63,159,127],ink:'#a8f2d4',name:'Hielo V'},
+  'hielo VI':{fill:[79,95,201],ink:'#b9c2ff',name:'Hielo VI'},
+  'hielo VII':{fill:[127,79,201],ink:'#d4b3ff',name:'Hielo VII'}
+};
+const FREQ={'L':740,'α':523,'β':622,'α+L':440,'L+β':560,'α+β':392,'meta':494,'unstable':330,
+  'vapor':784,'líquido':587,'fluido supercrítico':880,'hielo Ih':659,'hielo III':698,'hielo V':740,'hielo VI':784,'hielo VII':831};
+
+/* ---------------- presets y estado ---------------- */
+const PRESETS={
+  pbsn:{name:'Pb–Sn',A:'Pb',B:'Sn',params:{TmA:600.6,TmB:505.1,dHfA:4770,dHfB:7030,L0:9500,L1:3500,omL:800},
+    ref:{Te:456.15,xe:0.739,solA:0.293,solB:0.0145,note:'Eutéctico real: 456.15 K · 61.9 %wt Sn. La solución regular (incluso con L₁) no captura las dos redes cristalinas distintas: la desviación es esperable y se declara.'}},
+  cuni:{name:'Cu–Ni',A:'Cu',B:'Ni',params:{TmA:1357.8,TmB:1728.3,dHfA:13260,dHfB:17480,L0:2000,L1:0,omL:-800},
+    ref:{note:'Sistema isomorfo: solubilidad total en sólido y líquido. Los puntos de fusión puros son exactos por construcción; la lente real requiere Ω(T,x) de CALPHAD.'}},
+  generic:{name:'Genérico A–B',A:'A',B:'B',params:{TmA:1000,TmB:700,dHfA:10000,dHfB:8500,L0:16000,L1:2000,omL:0},
+    ref:{note:'Sistema didáctico sin referencia experimental: explora cómo L₀, L₁ y Ω_L crean o destruyen el eutéctico.'}}
+};
+const state={
+  mode:'eutectic',preset:'pbsn',params:{...PRESETS.pbsn.params},
+  T:480,x0:0.62,
+  misc:{omega:18000,T:800,x0:0.35},
+  water:{T:300,logP:5},
+  show:{spin:true,tie:true,grid:true,labels:true},
+  sound:true
+};
+let diagram=null,miscD=null,lastKey=null,notableIdx=0;
+
+/* ---------------- sonido (sonificación de transiciones) ---------------- */
+const audio={ctx:null};
+function blip(f,vol){
+  if(!state.sound)return;
+  try{
+    if(!audio.ctx)audio.ctx=new (window.AudioContext||window.webkitAudioContext)();
+    const c=audio.ctx; if(c.state==='suspended')c.resume();
+    const t=c.currentTime,o=c.createOscillator(),g=c.createGain();
+    o.type='sine';o.frequency.value=f||440;
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(vol||0.045,t+0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+0.17);
+    o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+0.19);
+  }catch(e){}
+}
+function toast(msg,cls){
+  const box=$('#toasts'),el=document.createElement('div');
+  el.className='toast'+(cls?' '+cls:'');el.textContent=msg;box.appendChild(el);
+  while(box.children.length>3)box.firstChild.remove();
+  setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),320);},3200);
+}
+
+/* ================================================================
+   MODELO BINARIO: solución regular + Redlich–Kister (1 término)
+   ================================================================ */
+function makeModel(p){
+  const gA=T=>p.dHfA*(1-T/p.TmA), gB=T=>p.dHfB*(1-T/p.TmB);
+  function G(ph,x,T){
+    const xm=clamp(x,1e-12,1-1e-12);
+    const s=R*T*(xm*Math.log(xm)+(1-xm)*Math.log(1-xm));
+    return ph===1 ? (1-x)*gA(T)+x*gB(T)+s+p.omL*x*(1-x)
+                  : s+x*(1-x)*(p.L0+p.L1*(2*x-1));
+  }
+  function G1(ph,x,T){
+    const xm=clamp(x,1e-9,1-1e-9), t=R*T*Math.log(xm/(1-xm));
+    return ph===1 ? gB(T)-gA(T)+t+p.omL*(1-2*x)
+                  : t+(1-2*x)*(p.L0+p.L1*(2*x-1))+2*p.L1*x*(1-x);
+  }
+  function G2(ph,x,T){
+    const xm=clamp(x,1e-9,1-1e-9), t=R*T/(xm*(1-xm));
+    return ph===1 ? t-2*p.omL : t-2*p.L0+6*p.L1*(1-2*x);
+  }
+  return {G,G1,G2,
+    muA:(ph,x,T)=>G(ph,x,T)-x*G1(ph,x,T),
+    muB:(ph,x,T)=>G(ph,x,T)+(1-x)*G1(ph,x,T)};
+}
+function refineTie(m,s,T){
+  let x1=s.x0,x2=s.x1;
+  if(x2-x1<1e-6)return;
+  for(let it=0;it<14;it++){
+    const F1=m.muA(s.p0,x1,T)-m.muA(s.p1,x2,T);
+    const F2=m.muB(s.p0,x1,T)-m.muB(s.p1,x2,T);
+    if(Math.abs(F1)+Math.abs(F2)<1e-7)break;
+    const g1=m.G2(s.p0,x1,T),g2=m.G2(s.p1,x2,T);
+    const J11=-x1*g1,J12=x2*g2,J21=(1-x1)*g1,J22=-(1-x2)*g2;
+    const det=J11*J22-J12*J21;
+    if(Math.abs(det)<1e-12)break;
+    const n1=clamp(x1+(-F1*J22+F2*J12)/det,1e-6,1-1e-6);
+    const n2=clamp(x2+(-F2*J11+F1*J21)/det,1e-6,1-1e-6);
+    if(!(n2>n1+1e-7))break;
+    x1=n1;x2=n2;
+  }
+  s.x0=x1;s.x1=x2;
+}
+const BCAT={'α|α+L':'solidus','α+L|α':'solidus','L+β|β':'solidus',
+  'α+L|L':'liquidus','L|α+L':'liquidus','L|L+β':'liquidus',
+  'α|α+β':'solvus','α+β|β':'solvus'};
+
+function computeBinary(){
+  const p=state.params,m=makeModel(p);
+  const Tmin=Math.min(p.TmA,p.TmB)*0.55,Tmax=Math.max(p.TmA,p.TmB)*1.15;
+  const rows=300,N=320,dx=1/N,dT=(Tmax-Tmin)/(rows-1);
+  const dual=p.L0>2*R*Tmin;
+  const n2=2*(N+1),xs=new Float64Array(n2),gs=new Float64Array(n2),ph=new Uint8Array(n2),hull=new Int32Array(n2);
+  for(let i=0;i<=N;i++){xs[2*i]=i/N;xs[2*i+1]=i/N;ph[2*i]=0;ph[2*i+1]=1;}
+  const B={solidus:[],liquidus:[],solvus:[]},spots={},spinL=[],spinR=[],rowsOut=[];
+  let eut=null,prevL=null;
+  for(let r=0;r<rows;r++){
+    const T=Tmax-r*dT;
+    for(let i=0;i<=N;i++){const x=i/N;gs[2*i]=m.G(0,x,T);gs[2*i+1]=m.G(1,x,T);}
+    let h=0;
+    for(let k=0;k<n2;k++){
+      while(h>=2){
+        const a=hull[h-2],b=hull[h-1];
+        if((xs[b]-xs[a])*(gs[k]-gs[a])-(gs[b]-gs[a])*(xs[k]-xs[a])<=0)h--;else break;
+      }
+      hull[h++]=k;
+    }
+    const segs=[];
+    for(let i=0;i<h-1;i++){
+      const a=hull[i],b=hull[i+1];
+      segs.push({x0:xs[a],x1:xs[b],p0:ph[a],p1:ph[b],
+        tie:(xs[b]-xs[a]>2.5*dx)||(ph[a]!==ph[b])});
+    }
+    for(const s of segs){
+      if(s.tie)continue;
+      if(s.p0===1){s.key='L';continue;}
+      if(!dual){s.key='α';continue;}
+      s.key=(s.x0<=1e-9)?'α':(s.x1>=1-1e-9?'β':'α');
+    }
+    for(let i=0;i<segs.length;i++){
+      const s=segs[i];if(!s.tie)continue;
+      if(s.p0===0&&s.p1===0)s.key='α+β';
+      else{
+        let lab=null;const pv=segs[i-1],nx=segs[i+1];
+        if(pv&&!pv.tie&&pv.p0===0)lab=pv.key;
+        else if(nx&&!nx.tie&&nx.p0===0)lab=nx.key;
+        if(!lab)lab=(s.x0+s.x1)/2<0.5?'α':'β';
+        s.key=s.p0===0?lab+'+L':'L+'+lab;
+      }
+      refineTie(m,s,T);
+      s.g0=m.G(s.p0,s.x0,T);s.g1=m.G(s.p1,s.x1,T);
+    }
+    for(let i=0;i<segs.length-1;i++){
+      const cat=BCAT[segs[i].key+'|'+segs[i+1].key];
+      if(cat)B[cat].push([segs[i].x1,T]);
+    }
+    for(const s of segs){
+      const w=s.x1-s.x0,sp=spots[s.key];
+      if(!sp||w>sp.w)spots[s.key]={x:(s.x0+s.x1)/2,T,w};
+    }
+    const Lseg=segs.find(s=>!s.tie&&s.key==='L');
+    if(prevL&&!Lseg&&dual){
+      const ab=segs.find(s=>s.tie&&s.key==='α+β');
+      eut={T:T+dT/2,xE:(prevL.x0+prevL.x1)/2,xa:ab?ab.x0:0,xb:ab?ab.x1:1};
+    }
+    prevL=Lseg||null;
+    let pl=null,pr=null,pg=m.G2(0,dx/2,T);
+    for(let i=1;i<200;i++){
+      const x=i/200,g2=m.G2(0,x,T);
+      if(pg>0&&g2<=0)pl=x;else if(pg<=0&&g2>0)pr=x;
+      pg=g2;
+    }
+    if(pl!=null)spinL.push([pl,T]);
+    if(pr!=null)spinR.push([pr,T]);
+    rowsOut.push({T,segs});
+  }
+  return {model:m,Tmin,Tmax,dT,rows:rowsOut,B,spots,eut,spinL,spinR,dual};
+}
+function binaryState(){
+  const d=diagram,r=clamp(Math.round((d.Tmax-state.T)/d.dT),0,d.rows.length-1);
+  const row=d.rows[r],x=state.x0;
+  const seg=row.segs.find(s=>x>=s.x0&&x<=s.x1)||row.segs[row.segs.length-1];
+  let phases,resid=null,count;
+  if(seg.tie){
+    const labs=seg.key.split('+');
+    const f0=(seg.x1-x)/(seg.x1-seg.x0);
+    phases=[{label:labs[0],x:seg.x0,f:f0},{label:labs[1],x:seg.x1,f:1-f0}];
+    resid=Math.abs(d.model.muA(seg.p0,seg.x0,row.T)-d.model.muA(seg.p1,seg.x1,row.T));
+    count=2;
+  }else{phases=[{label:seg.key,x,f:1}];count=1;}
+  if(d.eut&&Math.abs(state.T-d.eut.T)<d.dT&&x>=d.eut.xa&&x<=d.eut.xb)count=3;
+  return {row,seg,phases,resid,count,muA:d.model.muA(seg.p0,seg.tie?seg.x0:x,row.T),
+    muB:d.model.muB(seg.p0,seg.tie?seg.x0:x,row.T)};
+}
+
+/* ================================================================
+   LACUNA DE MISCIBILIDAD (solución regular simétrica, analítica)
+   ================================================================ */
+function miscBinodal(om,T){
+  const k=om/(R*T);
+  let a=1e-9,b=0.5-1e-9;
+  const f=x=>Math.log(x/(1-x))+k*(1-2*x);
+  if(f(b)<=0)return null;
+  for(let i=0;i<64;i++){const m=(a+b)/2;if(f(m)<0)a=m;else b=m;}
+  return (a+b)/2;
+}
+function computeMisc(){
+  const om=state.misc.omega,Tc=om/(2*R);
+  const Tmin=150,Tmax=Math.max(1500,Tc*1.3),rows=280,dT=(Tmax-Tmin)/(rows-1);
+  const rowsOut=[];
+  for(let r=0;r<rows;r++){
+    const T=Tmax-r*dT;
+    if(T>=Tc){rowsOut.push({T});continue;}
+    const xb=miscBinodal(om,T),s=Math.sqrt(1-2*R*T/om),xs1=(1-s)/2,xs2=(1+s)/2;
+    rowsOut.push({T,xb1:xb,xb2:1-xb,xs1,xs2});
+  }
+  const m=makeModel({TmA:1e9,TmB:1e9,dHfA:0,dHfB:0,L0:om,L1:0,omL:0});
+  return {om,Tc,Tmin,Tmax,dT,rows:rowsOut,model:m};
+}
+function miscState(){
+  const d=miscD,T=state.misc.T,x=state.misc.x0;
+  if(T>=d.Tc)return {phases:[{label:'α',x,f:1}],zone:'estable',resid:null,count:1};
+  const xb=miscBinodal(d.om,T),s=Math.sqrt(1-2*R*d.om? 0:0);
+  const sp=Math.sqrt(1-2*R*T/d.om),xs1=(1-sp)/2,xs2=(1+sp)/2;
+  const G=x=>d.model.G(0,x,T),G1=x=>d.model.G1(0,x,T);
+  const resid=Math.abs((G(xb)-xb*G1(xb))-(G(1-xb)-(1-xb)*G1(1-xb)));
+  let zone='estable',phases;
+  if(x>xb&&x<1-xb){
+    const f=(1-xb-x)/(1-2*xb);
+    phases=[{label:'α',x:xb,f},{label:'β',x:1-xb,f:1-f}];
+    zone=(x>xs1&&x<xs2)?'inestable':'metaestable';
+  }else phases=[{label:'α',x,f:1}];
+  return {phases,zone,resid,count:phases.length,xs1,xs2,xb};
+}
+
+/* ================================================================
+   AGUA P–T · Wagner (IAPWS), sublimación IAPWS, fusión Ih IAPWS,
+   hielos III–VII: Simon–Glatzel anclado a puntos triples
+   ================================================================ */
+const W={Tt:273.16,Pt:611.657,Tc:647.096,Pc:22.064e6,
+  tIhIII:251.165,pIhIII:208.566e6,tIIIV:256.164,pIIIV:350.1e6,
+  tVVI:273.31,pVVI:632.4e6,tVIVII:355,pVIVII:2216e6,
+  Tmin:180,Tmax:800,lpMin:-1,lpMax:10.3};
+function pVap(T){
+  if(T<W.Tt||T>W.Tc)return null;
+  const tau=1-T/W.Tc;
+  const f=-7.85951783*tau+1.84408259*Math.pow(tau,1.5)-11.7866497*Math.pow(tau,3)
+    +22.6807411*Math.pow(tau,3.5)-15.9618719*Math.pow(tau,4)+1.80122502*Math.pow(tau,7.5);
+  return W.Pc*Math.exp(W.Tc/T*f);
+}
+function pSubl(T){
+  if(T>W.Tt||T<50)return null;
+  const th=T/W.Tt;
+  const f=-21.2144006*Math.pow(th,1/300)+27.3203819*Math.pow(th,1.20666667)-6.10598130*Math.pow(th,1.70333333);
+  return W.Pt*Math.exp(W.Tt/T*f);
+}
+function pMeltIh(T){
+  if(T<W.tIhIII||T>W.Tt)return null;
+  const th=T/W.Tt;
+  const f=0.119539337e7*(1-Math.pow(th,3))+0.808183159e5*(1-Math.pow(th,25.9376775))+0.333826860e4*(1-Math.pow(th,103.259729));
+  return W.Pt*(1+f);
+}
+function simon(T,T0,P0,T1,P1,c){return P0+(P1-P0)/(Math.pow(T1/T0,c)-1)*(Math.pow(T/T0,c)-1);}
+const pMeltIII=T=>(T<W.tIhIII||T>W.tIIIV)?null:simon(T,W.tIhIII,W.pIhIII,W.tIIIV,W.pIIIV,3);
+const pMeltV  =T=>(T<W.tIIIV||T>W.tVVI)?null:simon(T,W.tIIIV,W.pIIIV,W.tVVI,W.pVVI,3);
+const pMeltVI =T=>(T<W.tVVI||T>W.tVIVII)?null:simon(T,W.tVVI,W.pVVI,W.tVIVII,W.pVIVII,3);
+const pMeltVII=T=>(T<W.tVIVII||T>W.Tmax)?null:simon(T,W.tVIVII,W.pVIVII,565,6300e6,3);
+function waterTh(T){return {ps:pSubl(T),pv:pVap(T),ih:pMeltIh(T),iii:pMeltIII(T),v:pMeltV(T),vi:pMeltVI(T),vii:pMeltVII(T)};}
+function classifyW(T,P,c){
+  if(T>=W.Tc&&P>=W.Pc)return'fluido supercrítico';
+  if(T<W.tIhIII)return (P>W.pIhIII||P>c.ps)?'hielo Ih':'vapor';
+  let ice,pm;
+  if(T<W.tIIIV){ice='hielo III';pm=c.iii;}
+  else if(T<W.tVVI){ice='hielo V';pm=c.v;}
+  else if(T<W.tVIVII){ice='hielo VI';pm=c.vi;}
+  else{ice='hielo VII';pm=c.vii;}
+  if(pm!=null&&P>pm)return ice;
+  if(T<W.Tt){
+    if(c.ih!=null&&P>c.ih)return'líquido';
+    return P>c.ps?'hielo Ih':'vapor';
+  }
+  if(T<W.Tc)return P>c.pv?'líquido':'vapor';
+  return'vapor';
+}
+const waterAt=(T,P)=>classifyW(T,P,waterTh(T));
+function clausiusL(T){
+  const h=0.02,p1=pVap(T-h),p2=pVap(T+h);
+  if(!p1||!p2)return null;
+  return R*T*T*(Math.log(p2)-Math.log(p1))/(2*h);
+}
+
+/* ================================================================
+   LIENZOS Y RENDERIZADO
+   ================================================================ */
+const mainC=$('#mainCanvas'),gC=$('#gCanvas');
+const mctx=mainC.getContext('2d'),gctx=gC.getContext('2d');
+const baseC=document.createElement('canvas'),bctx=baseC.getContext('2d');
+let LAY={cw:0,ch:0,l:58,t:16,pw:10,ph:10};
+let hatch=null;
+function makeHatch(){
+  const h=document.createElement('canvas');h.width=h.height=8;
+  const c=h.getContext('2d');c.strokeStyle='rgba(255,255,255,0.10)';c.lineWidth=1.6;
+  c.beginPath();c.moveTo(-2,10);c.lineTo(10,-2);c.stroke();
+  hatch=bctx.createPattern(h,'repeat');
+}
+function sizeCanvases(){
+  const wr=$('#mainWrap'),d=DPR();
+  const cw=wr.clientWidth,ch=wr.clientHeight;
+  for(const c of [mainC,baseC]){c.width=Math.round(cw*d);c.height=Math.round(ch*d);}
+  mctx.setTransform(d,0,0,d,0,0);bctx.setTransform(d,0,0,d,0,0);
+  LAY={cw,ch,l:58,t:16,pw:cw-58-18,ph:ch-16-44};
+  const gw=gC.parentElement.clientWidth,gh=gC.parentElement.clientHeight;
+  gC.width=Math.round(gw*d);gC.height=Math.round(gh*d);gctx.setTransform(d,0,0,d,0,0);
+  makeHatch();
+}
+function niceStep(raw){
+  const p=Math.pow(10,Math.floor(Math.log10(raw)));
+  const n=raw/p;return (n<1.5?1:n<3.5?2:n<7.5?5:10)*p;
+}
+function poly(c,pts,mapX,mapY,color,w,dash,glow){
+  if(pts.length<2)return;
+  c.save();c.strokeStyle=color;c.lineWidth=w;
+  if(dash)c.setLineDash(dash);
+  if(glow){c.shadowColor=color;c.shadowBlur=7;}
+  c.beginPath();
+  pts.forEach((p,i)=>{const x=mapX(p[0]),y=mapY(p[1]);i?c.lineTo(x,y):c.moveTo(x,y);});
+  c.stroke();c.restore();
+}
+function chip(c,x,y,text,color,align){
+  c.save();c.font='600 11px IBM Plex Mono,monospace';
+  const w=c.measureText(text).width+14,h=19;
+  let cx=align==='right'?x-w:align==='center'?x-w/2:x;
+  cx=clamp(cx,2,LAY.cw-w-2);const cy=clamp(y-h/2,2,LAY.ch-h-2);
+  c.fillStyle='rgba(8,15,28,0.82)';c.strokeStyle=color;c.lineWidth=1;
+  c.beginPath();c.roundRect(cx,cy,w,h,5);c.fill();c.stroke();
+  c.fillStyle=color;c.textBaseline='middle';c.fillText(text,cx+7,cy+h/2+0.5);
+  c.restore();
+}
+function axesTX(c,Tmin,Tmax,xName,A,B){
+  const {l,t,pw,ph}=LAY;
+  c.save();c.font='500 10.5px IBM Plex Mono,monospace';c.fillStyle='#93A7C4';
+  c.strokeStyle='rgba(147,167,196,0.35)';c.lineWidth=1;
+  c.strokeRect(l,t,pw,ph);
+  c.textAlign='center';
+  for(let x=0;x<=1.001;x+=0.2){
+    const px=l+x*pw;
+    if(state.show.grid&&x>0&&x<1){c.strokeStyle='rgba(147,167,196,0.10)';c.beginPath();c.moveTo(px,t);c.lineTo(px,t+ph);c.stroke();}
+    c.fillText(x.toFixed(1),px,t+ph+15);
+  }
+  c.fillText(xName,l+pw/2,t+ph+32);
+  const st=niceStep((Tmax-Tmin)/6);
+  c.textAlign='right';
+  for(let T=Math.ceil(Tmin/st)*st;T<=Tmax;T+=st){
+    const py=t+(Tmax-T)/(Tmax-Tmin)*ph;
+    if(state.show.grid){c.strokeStyle='rgba(147,167,196,0.10)';c.beginPath();c.moveTo(l,py);c.lineTo(l+pw,py);c.stroke();}
+    c.fillText(T.toFixed(0),l-7,py+3.5);
+  }
+  c.save();c.translate(13,t+ph/2);c.rotate(-Math.PI/2);c.textAlign='center';c.fillText('T (K)',0,0);c.restore();
+  if(A){c.textAlign='left';c.fillStyle='#ffd08a';c.fillText('A · '+A,l+4,t+12);
+    c.textAlign='right';c.fillStyle='#ff9ade';c.fillText('B · '+B,l+pw-4,t+12);}
+  c.restore();
+}
+
+/* ---------- base: binario ---------- */
+function renderBinaryBase(){
+  const c=bctx,d=diagram,{cw,ch,l,t,pw,ph}=LAY;
+  const X=x=>l+x*pw, Y=T=>t+(d.Tmax-T)/(d.Tmax-d.Tmin)*ph;
+  c.clearRect(0,0,cw,ch);
+  c.fillStyle='#0b1626';c.fillRect(l,t,pw,ph);
+  c.save();c.beginPath();c.rect(l,t,pw,ph);c.clip();
+  const rh=ph/d.rows.length+0.6;
+  for(const row of d.rows){
+    const y=Y(row.T);
+    for(const s of row.segs){c.fillStyle=REG[s.key].fill;c.fillRect(X(s.x0),y,(s.x1-s.x0)*pw+0.5,rh);}
+  }
+  c.fillStyle=hatch;
+  for(const row of d.rows){
+    const y=Y(row.T);
+    for(const s of row.segs)if(s.tie)c.fillRect(X(s.x0),y,(s.x1-s.x0)*pw+0.5,rh);
+  }
+  poly(c,d.B.liquidus,X,Y,'#8fd0ff',2.2,null,true);
+  poly(c,d.B.solidus,X,Y,'#ffd08a',2,null,false);
+  poly(c,d.B.solvus,X,Y,'#ff9ade',1.6,[5,4],false);
+  if(d.eut){
+    const e=d.eut,y=Y(e.T);
+    c.save();c.strokeStyle='#A8E830';c.lineWidth=2;c.shadowColor='#A8E830';c.shadowBlur=8;
+    c.beginPath();c.moveTo(X(e.xa),y);c.lineTo(X(e.xb),y);c.stroke();
+    c.beginPath();c.arc(X(e.xE),y,4.5,0,7);c.stroke();c.restore();
+  }
+  c.restore();
+  const pr=PRESETS[state.preset]||PRESETS.generic;
+  axesTX(c,d.Tmin,d.Tmax,'x_'+pr.B+' · fracción molar',pr.A,pr.B);
+  if(state.show.labels){
+    for(const k in d.spots){
+      const sp=d.spots[k];if(sp.w<0.055)continue;
+      chip(c,clamp(X(sp.x),l+30,l+pw-30),Y(sp.T),k,REG[k].ink,'center');
+    }
+  }
+  if(d.eut&&state.show.labels)
+    chip(c,X(d.eut.xE)+12,Y(d.eut.T)-16,'T_E ≈ '+d.eut.T.toFixed(0)+' K · x_E ≈ '+d.eut.xE.toFixed(2),'#A8E830','left');
+}
+
+/* ---------- base: lacuna ---------- */
+function renderMiscBase(){
+  const c=miscD?bctx:bctx,d=miscD,{cw,ch,l,t,pw,ph}=LAY;
+  const X=x=>l+x*pw,Y=T=>t+(d.Tmax-T)/(d.Tmax-d.Tmin)*ph;
+  c.clearRect(0,0,cw,ch);c.fillStyle='#0b1626';c.fillRect(l,t,pw,ph);
+  c.save();c.beginPath();c.rect(l,t,pw,ph);c.clip();
+  const rh=ph/d.rows.length+0.6,bin=[],spL=[],spR=[];
+  for(const row of d.rows){
+    const y=Y(row.T);
+    if(row.xb1==null){c.fillStyle=REG['α'].fill;c.fillRect(l,y,pw,rh);continue;}
+    const {xb1,xb2,xs1,xs2}=row;
+    c.fillStyle=REG['α'].fill;c.fillRect(l,y,pw,rh);
+    c.fillStyle=REG['meta'].fill;c.fillRect(X(xb1),y,(xb2-xb1)*pw+0.5,rh);
+    c.fillStyle=REG['unstable'].fill;c.fillRect(X(xs1),y,(xs2-xs1)*pw+0.5,rh);
+    c.fillStyle=hatch;c.fillRect(X(xb1),y,(xb2-xb1)*pw+0.5,rh);
+    bin.push([xb1,row.T],[xb2,row.T]);spL.push([xs1,row.T]);spR.push([xs2,row.T]);
+  }
+  const bl=[],br=[];
+  for(let i=0;i<bin.length;i+=2){bl.push(bin[i]);br.push(bin[i+1]);}
+  poly(c,bl,X,Y,'#ffd08a',2.2,null,true);poly(c,br,X,Y,'#ffd08a',2.2,null,true);
+  c.restore();
+  axesTX(c,d.Tmin,d.Tmax,'x_B · fracción molar','A','B');
+  const ytc=Y(d.Tc);
+  c.save();c.fillStyle='#A8E830';c.shadowColor='#A8E830';c.shadowBlur=9;
+  c.beginPath();c.arc(X(0.5),ytc,4.5,0,7);c.fill();c.restore();
+  if(state.show.labels){
+    chip(c,X(0.5)+12,ytc-14,'T_c = Ω/2R = '+d.Tc.toFixed(0)+' K','#A8E830','left');
+    chip(c,X(0.10),Y(d.Tmin+(d.Tmax-d.Tmin)*0.35),'α estable',REG['α'].ink,'center');
+    chip(c,X(0.5),Y(d.Tc*0.45),'inestable',REG['unstable'].ink,'center');
+    const rm=d.rows.find(r=>r.T<=d.Tc*0.8&&r.xb1!=null);
+    if(rm)chip(c,X((rm.xb1+rm.xs1)/2),Y(rm.T),'metaestable',REG['meta'].ink,'center');
+  }
+  miscD._spL=spL;miscD._spR=spR;
+}
+
+/* ---------- base: agua ---------- */
+function renderWaterBase(){
+  const c=bctx,{cw,ch,l,t,pw,ph}=LAY,d=DPR();
+  const X=T=>l+(T-W.Tmin)/(W.Tmax-W.Tmin)*pw;
+  const Y=lp=>t+(W.lpMax-lp)/(W.lpMax-W.lpMin)*ph;
+  c.clearRect(0,0,cw,ch);c.fillStyle='#0b1626';c.fillRect(l,t,pw,ph);
+  const iw=Math.max(2,Math.round(pw*d)),ih=Math.max(2,Math.round(ph*d));
+  const img=c.createImageData(iw,ih),data=img.data;
+  const cols=[];
+  for(let i=0;i<iw;i++){
+    const T=W.Tmin+(i+0.5)/iw*(W.Tmax-W.Tmin);
+    cols.push([T,waterTh(T)]);
+  }
+  for(let j=0;j<ih;j++){
+    const P=Math.pow(10,W.lpMax-(j+0.5)/ih*(W.lpMax-W.lpMin));
+    for(let i=0;i<iw;i++){
+      const key=classifyW(cols[i][0],P,cols[i][1]);
+      const rgb=WREG[key].fill,o=(j*iw+i)*4;
+      data[o]=rgb[0];data[o+1]=rgb[1];data[o+2]=rgb[2];data[o+3]=255;
+    }
+  }
+  const tmp=document.createElement('canvas');tmp.width=iw;tmp.height=ih;
+  tmp.getContext('2d').putImageData(img,0,0);
+  c.save();c.imageSmoothingEnabled=false;
+  c.drawImage(tmp,0,0,iw,ih,l,t,pw,ph);c.restore();
+  c.save();c.beginPath();c.rect(l,t,pw,ph);c.clip();
+  const curve=(fn,T0,T1,color,w,dash)=>{
+    const pts=[];
+    for(let i=0;i<=160;i++){
+      const T=T0+(T1-T0)*i/160,p=fn(T);
+      if(p&&p>0)pts.push([T,Math.log10(p)]);
+    }
+    poly(c,pts,X,Y,color,w,dash,true);
+  };
+  curve(pSubl,180,W.Tt,'#dff2ff',2,null);
+  curve(pVap,W.Tt,W.Tc,'#7FD4FF',2.4,null);
+  curve(pMeltIh,W.tIhIII,W.Tt,'#bfe6ff',2.2,null);
+  curve(pMeltIII,W.tIhIII,W.tIIIV,'#a8e4f2',2,null);
+  curve(pMeltV,W.tIIIV,W.tVVI,'#a8f2d4',2,null);
+  curve(pMeltVI,W.tVVI,W.tVIVII,'#b9c2ff',2,null);
+  curve(pMeltVII,W.tVIVII,W.Tmax,'#d4b3ff',2,null);
+  c.setLineDash([4,5]);c.strokeStyle='rgba(223,242,255,0.30)';c.lineWidth=1.2;
+  for(const [Tt,Pp] of [[W.tIhIII,W.pIhIII],[W.tIIIV,W.pIIIV],[W.tVVI,W.pVVI],[W.tVIVII,W.pVIVII]]){
+    c.beginPath();c.moveTo(X(Tt),Y(Math.log10(Pp)));c.lineTo(X(Tt),t);c.stroke();
+  }
+  c.setLineDash([]);
+  c.restore();
+  /* ejes */
+  c.save();c.font='500 10.5px IBM Plex Mono,monospace';c.fillStyle='#93A7C4';
+  c.strokeStyle='rgba(147,167,196,0.35)';c.strokeRect(l,t,pw,ph);c.textAlign='center';
+  for(let T=200;T<=W.Tmax;T+=100){
+    const px=X(T);
+    if(state.show.grid){c.strokeStyle='rgba(255,255,255,0.07)';c.beginPath();c.moveTo(px,t);c.lineTo(px,t+ph);c.stroke();}
+    c.fillText(T+'',px,t+ph+15);
+  }
+  c.fillText('T (K)',l+pw/2,t+ph+32);
+  c.textAlign='right';
+  for(let e=0;e<=10;e+=1){
+    const py=Y(e);if(py<t||py>t+ph)continue;
+    if(state.show.grid){c.strokeStyle='rgba(255,255,255,0.07)';c.beginPath();c.moveTo(l,py);c.lineTo(l+pw,py);c.stroke();}
+    const lbl=e<3?Math.pow(10,e)+' Pa':e<6?Math.pow(10,e-3)+' kPa':e<9?Math.pow(10,e-6)+' MPa':Math.pow(10,e-9)+' GPa';
+    c.fillText(lbl,l-7,py+3.5);
+  }
+  c.save();c.translate(13,t+ph/2);c.rotate(-Math.PI/2);c.textAlign='center';c.fillText('P (escala log)',0,0);c.restore();
+  c.restore();
+  /* marcadores notables */
+  const mark=(T,P,label,color,dx,dy)=>{
+    const px=X(T),py=Y(Math.log10(P));
+    c.save();c.strokeStyle=color;c.fillStyle=color;c.lineWidth=1.6;c.shadowColor=color;c.shadowBlur=7;
+    c.beginPath();c.arc(px,py,4,0,7);c.stroke();
+    c.beginPath();c.arc(px,py,1.4,0,7);c.fill();c.restore();
+    if(state.show.labels&&label)chip(c,px+dx,py+dy,label,color,'left');
+  };
+  mark(W.Tt,W.Pt,'punto triple · 273.16 K','#A8E830',10,-12);
+  mark(W.Tc,W.Pc,'punto crítico · 647.10 K','#FFB020',-160,-14);
+  mark(W.tIhIII,W.pIhIII,'Ih·III·L','#a8e4f2',8,10);
+  mark(W.tVVI,W.pVVI,'V·VI·L','#b9c2ff',8,-10);
+  mark(W.tVIVII,W.pVIVII,'VI·VII·L','#d4b3ff',8,-10);
+  if(state.show.labels){
+    const anchors=[['vapor',480,1e3],['líquido',420,3e6],['fluido supercrítico',710,3e8],
+      ['hielo Ih',240,1e4],['hielo III',253.5,3e8],['hielo V',265,5.2e8],['hielo VI',315,1.4e9],['hielo VII',560,9e9]];
+    for(const [name,T,P] of anchors){
+      let tt=T,pp=P;
+      if(waterAt(tt,pp)!==name){
+        outer:for(let dT=-30;dT<=30;dT+=10)for(let dl=-1.5;dl<=1.5;dl+=0.5){
+          if(waterAt(T+dT,P*Math.pow(10,dl))===name){tt=T+dT;pp=P*Math.pow(10,dl);break outer;}
+        }
+        if(waterAt(tt,pp)!==name)continue;
+      }
+      chip(c,X(tt),Y(Math.log10(pp)),name,WREG[name].ink,'center');
+    }
+  }
+}
+
+/* ---------- overlay (punto de estado, reparto, espinodal) ---------- */
+function drawOverlay(){
+  const c=mctx,{l,t,pw,ph}=LAY;
+  c.save();c.beginPath();c.rect(l-1,t-1,pw+2,ph+2);c.clip();
+  if(state.mode==='eutectic'&&diagram){
+    const d=diagram,X=x=>l+x*pw,Y=T=>t+(d.Tmax-T)/(d.Tmax-d.Tmin)*ph;
+    if(state.show.spin){
+      poly(c,d.spinL,X,Y,'#FF4D5E',1.5,[3,4],false);
+      poly(c,d.spinR,X,Y,'#FF4D5E',1.5,[3,4],false);
+    }
+    const st=binaryState(),y=Y(st.row.T);
+    if(state.show.tie&&st.seg.tie){
+      c.save();c.strokeStyle='#F2EAD9';c.lineWidth=1.8;c.shadowColor='#F2EAD9';c.shadowBlur=5;
+      c.beginPath();c.moveTo(X(st.seg.x0),y);c.lineTo(X(st.seg.x1),y);c.stroke();
+      c.fillStyle='#F2EAD9';
+      for(const xx of [st.seg.x0,st.seg.x1]){c.beginPath();c.arc(X(xx),y,3.4,0,7);c.fill();}
+      c.restore();
+    }
+    statePoint(c,X(state.x0),y);
+  }else if(state.mode==='miscibility'&&miscD){
+    const d=miscD,X=x=>l+x*pw,Y=T=>t+(d.Tmax-T)/(d.Tmax-d.Tmin)*ph;
+    if(state.show.spin){
+      poly(c,d._spL||[],X,Y,'#FF4D5E',1.6,[3,4],true);
+      poly(c,d._spR||[],X,Y,'#FF4D5E',1.6,[3,4],true);
+    }
+    const st=miscState(),y=Y(state.misc.T);
+    if(state.show.tie&&st.phases.length===2){
+      c.save();c.strokeStyle='#F2EAD9';c.lineWidth=1.8;
+      c.beginPath();c.moveTo(X(st.phases[0].x),y);c.lineTo(X(st.phases[1].x),y);c.stroke();
+      c.fillStyle='#F2EAD9';
+      for(const p of st.phases){c.beginPath();c.arc(X(p.x),y,3.4,0,7);c.fill();}
+      c.restore();
+    }
+    statePoint(c,X(state.misc.x0),y);
+  }else{
+    const X=T=>l+(T-W.Tmin)/(W.Tmax-W.Tmin)*pw;
+    const Y=lp=>t+(W.lpMax-lp)/(W.lpMax-W.lpMin)*ph;
+    statePoint(c,X(state.water.T),Y(state.water.logP));
+  }
+  c.restore();
+  /* chips de eje */
+  if(state.mode==='water'){
+    const {l:ll,t:tt,ph:phh}=LAY;
+    const y=tt+(W.lpMax-state.water.logP)/(W.lpMax-W.lpMin)*phh;
+    chip(c,ll-4,y,fmtPa(Math.pow(10,state.water.logP)),'#7FD4FF','right');
+    const x=ll+(state.water.T-W.Tmin)/(W.Tmax-W.Tmin)*pw;
+    chip(c,x,tt+phh+13,fmtK(state.water.T),'#FFB020','center');
+  }else{
+    const d=state.mode==='eutectic'?diagram:miscD;
+    const T=state.mode==='eutectic'?state.T:state.misc.T,x0=state.mode==='eutectic'?state.x0:state.misc.x0;
+    const y=LAY.t+(d.Tmax-T)/(d.Tmax-d.Tmin)*LAY.ph;
+    chip(c,LAY.l-4,y,fmtK(T),'#FFB020','right');
+    chip(c,LAY.l+x0*LAY.pw,LAY.t+LAY.ph+13,'x₀ '+x0.toFixed(3),'#E85BD0','center');
+  }
+}
+function statePoint(c,x,y){
+  c.save();
+  c.strokeStyle='rgba(242,234,217,0.35)';c.lineWidth=1;c.setLineDash([3,4]);
+  c.beginPath();c.moveTo(LAY.l,y);c.lineTo(LAY.l+LAY.pw,y);c.stroke();
+  c.beginPath();c.moveTo(x,LAY.t);c.lineTo(x,LAY.t+LAY.ph);c.stroke();
+  c.setLineDash([]);
+  c.shadowColor='#F2EAD9';c.shadowBlur=12;
+  c.fillStyle='rgba(242,234,217,0.25)';c.beginPath();c.arc(x,y,10,0,7);c.fill();
+  c.fillStyle='#F2EAD9';c.beginPath();c.arc(x,y,4.2,0,7);c.fill();
+  c.strokeStyle='#0B1626';c.lineWidth=1.4;c.beginPath();c.arc(x,y,4.2,0,7);c.stroke();
+  c.restore();
+}
+
+/* ---------- panel G(x) ---------- */
+function drawG(){
+  if(state.mode==='water')return;
+  const c=gctx,w=gC.width/DPR(),h=gC.height/DPR();
+  c.clearRect(0,0,w,h);
+  const l=48,r=12,t=12,b=26,pw=w-l-r,ph=h-t-b;
+  const isE=state.mode==='eutectic';
+  const m=isE?diagram.model:miscD.model,T=isE?state.T:state.misc.T;
+  const NPT=160,cs=[[],[]];let gmin=Infinity,gmax=-Infinity;
+  for(let i=0;i<=NPT;i++){
+    const x=i/NPT;
+    const gS=m.G(0,x,T);cs[0].push([x,gS]);
+    if(gS<gmin)gmin=gS;if(gS>gmax)gmax=gS;
+    if(isE){const gL=m.G(1,x,T);cs[1].push([x,gL]);if(gL<gmin)gmin=gL;if(gL>gmax)gmax=gL;}
+  }
+  const pad=(gmax-gmin)*0.14||1;gmin-=pad;gmax+=pad;
+  const X=x=>l+x*pw,Y=g=>t+(gmax-g)/(gmax-gmin)*ph;
+  c.fillStyle='#0b1626';c.fillRect(l,t,pw,ph);
+  /* banda inestable */
+  let s1=null,s2=null,pg=m.G2(0,0.002,T);
+  for(let i=1;i<220;i++){const x=i/220,g2=m.G2(0,x,T);
+    if(pg>0&&g2<=0)s1=x;else if(pg<=0&&g2>0)s2=x;pg=g2;}
+  if(s1!=null&&s2!=null){c.fillStyle='rgba(255,77,94,0.09)';c.fillRect(X(s1),t,X(s2)-X(s1),ph);}
+  c.strokeStyle='rgba(147,167,196,0.3)';c.lineWidth=1;c.strokeRect(l,t,pw,ph);
+  c.save();c.beginPath();c.rect(l,t,pw,ph);c.clip();
+  /* tangentes comunes */
+  const row=isE?diagram.rows[clamp(Math.round((diagram.Tmax-T)/diagram.dT),0,diagram.rows.length-1)]:null;
+  const ties=[];
+  if(isE){for(const s of row.segs)if(s.tie)ties.push([s.x0,s.g0,s.x1,s.g1]);}
+  else{const st=miscState();
+    if(st.phases.length===2){const a=st.phases[0].x,b2=st.phases[1].x;ties.push([a,m.G(0,a,T),b2,m.G(0,b2,T)]);}}
+  for(const [x0,g0,x1,g1] of ties){
+    const slope=(g1-g0)/(x1-x0);
+    c.save();c.strokeStyle='rgba(242,234,217,0.4)';c.lineWidth=1;c.setLineDash([2,4]);
+    c.beginPath();c.moveTo(X(0),Y(g0-slope*x0));c.lineTo(X(1),Y(g0+slope*(1-x0)));c.stroke();
+    c.setLineDash([]);c.strokeStyle='#F2EAD9';c.lineWidth=1.8;c.shadowColor='#F2EAD9';c.shadowBlur=5;
+    c.beginPath();c.moveTo(X(x0),Y(g0));c.lineTo(X(x1),Y(g1));c.stroke();
+    c.fillStyle='#F2EAD9';
+    c.beginPath();c.arc(X(x0),Y(g0),3,0,7);c.fill();
+    c.beginPath();c.arc(X(x1),Y(g1),3,0,7);c.fill();c.restore();
+  }
+  /* curvas */
+  const stroke=(pts,color)=>{c.save();c.strokeStyle=color;c.lineWidth=2.2;c.shadowColor=color;c.shadowBlur=4;
+    c.beginPath();pts.forEach((p,i)=>{i?c.lineTo(X(p[0]),Y(p[1])):c.moveTo(X(p[0]),Y(p[1]));});c.stroke();c.restore();};
+  stroke(cs[0],'#FFA428');
+  if(isE)stroke(cs[1],'#4D9FFF');
+  /* inflexiones */
+  if(s1!=null){c.fillStyle='#FF4D5E';
+    for(const sx of [s1,s2]){if(sx==null)continue;
+      c.beginPath();c.moveTo(X(sx),Y(m.G(0,sx,T))-6);c.lineTo(X(sx)-4,Y(m.G(0,sx,T))+3);c.lineTo(X(sx)+4,Y(m.G(0,sx,T))+3);c.closePath();c.fill();}}
+  /* x0 */
+  const x0=isE?state.x0:state.misc.x0;
+  c.strokeStyle='rgba(232,91,208,0.75)';c.lineWidth=1.4;c.setLineDash([4,4]);
+  c.beginPath();c.moveTo(X(x0),t);c.lineTo(X(x0),t+ph);c.stroke();c.setLineDash([]);
+  c.restore();
+  c.font='500 9.5px IBM Plex Mono,monospace';c.fillStyle='#93A7C4';c.textAlign='center';
+  for(let x=0;x<=1.001;x+=0.25)c.fillText(x.toFixed(2),X(x),t+ph+13);
+  c.textAlign='right';
+  c.fillText((gmax/1000).toFixed(1),l-5,t+8);
+  c.fillText((gmin/1000).toFixed(1),l-5,t+ph);
+  c.save();c.translate(11,t+ph/2);c.rotate(-Math.PI/2);c.textAlign='center';c.fillText('G (kJ/mol)',0,0);c.restore();
+  c.textAlign='left';c.fillStyle='#FFA428';c.fillText('— sólido',l+6,t+11);
+  if(isE){c.fillStyle='#4D9FFF';c.fillText('— líquido',l+62,t+11);}
+  $('#gTemp').textContent='T = '+fmtK(T);
+}
+
+/* ================================================================
+   TARJETAS, BADGES, LÍMITES, LEYENDA
+   ================================================================ */
+function leverHTML(phases){
+  let bar='<div class="lever">',rows='';
+  for(const p of phases){
+    const reg=REG[p.label]||REG['α'];
+    const pct=(p.f*100);
+    bar+='<div style="width:'+pct.toFixed(2)+'%;background:'+reg.fill+';color:#0b1626">'+(pct>12?p.label+' '+(pct).toFixed(1)+'%':'')+'</div>';
+    rows+='<tr><td style="color:'+reg.ink+'">'+p.label+'</td><td>'+p.x.toFixed(4)+'</td><td>'+(p.f*100).toFixed(2)+' %</td></tr>';
+  }
+  bar+='</div>';
+  return bar+'<table class="phase-table"><thead><tr><th>Fase</th><th>x fase</th><th>Fracción molar</th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+function updateCards(){
+  const body=$('#stateBody');
+  if(state.mode==='eutectic'){
+    const st=binaryState(),d=diagram;
+    const tag=st.count===3?'<span class="state-tag warn">invariante · F=0</span>':st.count===2?'<span class="state-tag">bifásico · F=1</span>':'<span class="state-tag ok">monofásico · F=2</span>';
+    const col=(REG[st.phases[0].label]||REG['α']).ink;
+    body.innerHTML=
+      '<div class="state-phase"><span class="dot" style="color:'+col+';background:'+col+'"></span>'+
+      st.phases.map(p=>p.label).join(' + ')+tag+'</div>'+
+      '<div class="state-grid"><div class="sg-cell"><div class="k">Temperatura</div><div class="v">'+fmtK(state.T)+'</div></div>'+
+      '<div class="sg-cell"><div class="k">Composición x₀</div><div class="v">'+state.x0.toFixed(3)+'</div></div></div>'+
+      leverHTML(st.phases)+
+      (d.eut?'<div class="kv"><span>Eutéctico del modelo</span><b>'+d.eut.T.toFixed(1)+' K · x_E '+d.eut.xE.toFixed(3)+'</b></div>':'<div class="kv"><span>Eutéctico</span><b>ausente (isomorfo)</b></div>');
+    $('#muRow').innerHTML='<span>μ_A = <b>'+fmtJ(st.muA)+'</b></span><span>μ_B = <b>'+fmtJ(st.muB)+'</b></span>';
+    $('#chipT').textContent=fmtK(state.T);$('#chipX').textContent='x₀ '+state.x0.toFixed(3);
+  }else if(state.mode==='miscibility'){
+    const st=miscState(),d=miscD;
+    const zc=st.zone==='estable'?'ok':st.zone==='metaestable'?'warn':'bad';
+    body.innerHTML=
+      '<div class="state-phase"><span class="dot" style="color:'+(st.zone==='inestable'?'#FF4D5E':st.zone==='metaestable'?'#FFB020':'#A8E830')+';background:currentColor"></span>'+
+      st.phases.map(p=>p.label).join(' + ')+'<span class="state-tag '+zc+'">'+st.zone+'</span></div>'+
+      '<div class="state-grid"><div class="sg-cell"><div class="k">Temperatura</div><div class="v">'+fmtK(state.misc.T)+'</div></div>'+
+      '<div class="sg-cell"><div class="k">x₀ · T_c = '+d.Tc.toFixed(0)+' K</div><div class="v">'+state.misc.x0.toFixed(3)+'</div></div></div>'+
+      leverHTML(st.phases)+
+      '<div class="kv"><span>T / T_c</span><b>'+(state.misc.T/d.Tc).toFixed(3)+'</b></div>';
+    const m=d.model,T=state.misc.T,x=state.misc.x0;
+    $('#muRow').innerHTML='<span>μ_A = <b>'+fmtJ(m.muA(0,x,T))+'</b></span><span>μ_B = <b>'+fmtJ(m.muB(0,x,T))+'</b></span>';
+    $('#chipT').textContent=fmtK(state.misc.T);$('#chipX').textContent='x₀ '+state.misc.x0.toFixed(3);
+  }else{
+    const T=state.water.T,P=Math.pow(10,state.water.logP),key=waterAt(T,P),reg=WREG[key];
+    const ps=T<W.Tt?pSubl(T):pVap(T);
+    const L=T>=W.Tt&&T<=W.Tc-1?clausiusL(T):null;
+    let slope=null;
+    if(ps){const h=0.05,f=T<W.Tt?pSubl:pVap,p1=f(T-h),p2=f(T+h);if(p1&&p2)slope=(p2-p1)/(2*h);}
+    body.innerHTML=
+      '<div class="state-phase"><span class="dot" style="color:'+reg.ink+';background:'+reg.ink+'"></span>'+reg.name+'</div>'+
+      '<div class="state-grid"><div class="sg-cell"><div class="k">Temperatura</div><div class="v">'+T.toFixed(1)+' K · '+(T-273.15).toFixed(1)+' °C</div></div>'+
+      '<div class="sg-cell"><div class="k">Presión</div><div class="v">'+fmtPa(P)+'</div></div></div>'+
+      '<div class="kv"><span>'+(T<W.Tt?'P sublimación (T)':'P saturación (T)')+'</span><b>'+(ps?fmtPa(ps):'—')+'</b></div>'+
+      '<div class="kv"><span>dP/dT · Clausius–Clapeyron</span><b>'+(slope!=null?fmtSci(slope)+' Pa/K':'—')+'</b></div>'+
+      '<div class="kv"><span>L̂ = RT²·d ln P/dT</span><b>'+(L?fmtJ(L):'—')+'</b></div>'+
+      '<div class="kv"><span>Modelo</span><b>'+(T>W.tVIVII?'Simon–Glatzel △':'Wagner / IAPWS ✓')+'</b></div>';
+    $('#chipT').textContent=fmtK(T);$('#chipX').textContent=fmtPa(P);
+  }
+}
+const OKICO='<svg width="13" height="13" viewBox="0 0 13 13"><circle cx="6.5" cy="6.5" r="6" fill="none" stroke="#A8E830" stroke-width="1.4"/><path d="M3.6 6.6l2 2 3.8-4" fill="none" stroke="#A8E830" stroke-width="1.6" stroke-linecap="round"/></svg>';
+const WARNICO='<svg width="13" height="13" viewBox="0 0 13 13"><path d="M6.5 1.5l5.5 10H1z" fill="none" stroke="#FFB020" stroke-width="1.4" stroke-linejoin="round"/><path d="M6.5 5v3.2M6.5 9.8v.6" stroke="#FFB020" stroke-width="1.4" stroke-linecap="round"/></svg>';
+function badge(ok,html){return '<div class="vbadge'+(ok?'':' warn')+'">'+(ok?OKICO:WARNICO)+'<span>'+html+'</span></div>';}
+function updateBadges(){
+  const v=$('#validation');let out='';
+  if(state.mode==='eutectic'){
+    const st=binaryState();
+    if(st.resid!=null)out+=badge(st.resid<1e-4,'Tangente común · |Δμ_A| = <b>'+fmtSci(st.resid)+' J/mol</b>');
+    else out+=badge(true,'Monofásico · tangente trivial ✓');
+    const sum=st.phases.reduce((a,p)=>a+p.f,0);
+    out+=badge(Math.abs(sum-1)<1e-9,'Regla de la palanca · Σf = <b>'+sum.toFixed(6)+'</b>');
+    out+=badge(true,'Regla de fases (P fija) · F = 2 − '+st.count+' + 1 = <b>'+(3-st.count)+'</b>');
+    out+=badge(true,'Hull convexo + Newton · <b>'+diagram.rows.length+'</b> isotermas');
+  }else if(state.mode==='miscibility'){
+    const st=miscState(),d=miscD;
+    out+=badge(true,'T_c = Ω/2R = <b>'+d.Tc.toFixed(1)+' K</b> · analítico');
+    if(st.resid!=null)out+=badge(st.resid<1e-4,'Binodal · |μ_A(x₁)−μ_A(x₂)| = <b>'+fmtSci(st.resid)+' J/mol</b>');
+    else out+=badge(true,'T > T_c · solución homogénea ✓');
+    if(st.xs1!=null){const r=Math.abs(d.model.G2(0,st.xs1,state.misc.T));
+      out+=badge(r<1e-6,'Espinodal · |g″(x_s)| = <b>'+fmtSci(r)+'</b>');}
+    out+=badge(true,'Palanca · Σf = <b>'+st.phases.reduce((a,p)=>a+p.f,0).toFixed(6)+'</b>');
+  }else{
+    const L373=clausiusL(373.15),okL=L373&&Math.abs(L373/1000-40.657)<0.5;
+    out+=badge(true,'Punto triple · <b>273.16 K · 611.657 Pa</b> (IAPWS)');
+    out+=badge(true,'Punto crítico · <b>647.096 K · 22.064 MPa</b>');
+    out+=badge(okL,'Clausius–Clapeyron · L̂(373 K) = <b>'+(L373?(L373/1000).toFixed(2):'—')+' kJ/mol</b> (ref 40.66)');
+    const T=state.water.T,P=Math.pow(10,state.water.logP),c=waterTh(T);
+    let onB=false;
+    for(const p of [c.ps,c.pv,c.ih,c.iii,c.v,c.vi,c.vii])
+      if(p&&Math.abs(Math.log10(P)-Math.log10(p))<0.02)onB=true;
+    const nearTriple=Math.abs(T-W.Tt)<0.4&&Math.abs(Math.log10(P)-Math.log10(W.Pt))<0.06;
+    const Pn=nearTriple?3:onB?2:1;
+    out+=badge(true,'Regla de fases · F = 1 − '+Pn+' + 2 = <b>'+(3-Pn)+'</b>');
+  }
+  v.innerHTML=out;
+}
+function devCell(model,ref,fmt){
+  if(ref==null||model==null)return '<td>—</td>';
+  const d=Math.abs(model-ref)/Math.abs(ref)*100;
+  const cls=d<5?'ok':d<20?'mid':'bad';
+  return '<td><span class="dev '+cls+'">'+d.toFixed(1)+' %</span></td>';
+}
+function updateLimits(){
+  const tb=$('#limitsBody'),note=$('#limitsNote'),sys=$('#limitsSys');
+  if(state.mode==='eutectic'){
+    const d=diagram,pr=PRESETS[state.preset]||PRESETS.generic,ref=pr.ref;
+    sys.textContent=pr.name+(state.preset==='custom'?' (personalizado)':'');
+    let rows='';
+    const solA=d.B.solvus.length?Math.max(...d.B.solvus.filter(p=>p[0]<0.5).map(p=>p[0])):null;
+    if(d.eut){
+      rows+='<tr><td>Temperatura eutéctica</td><td>'+d.eut.T.toFixed(1)+' K</td><td>'+(ref.Te?ref.Te.toFixed(2)+' K':'—')+'</td>'+devCell(d.eut.T,ref.Te)+'</tr>';
+      rows+='<tr><td>Composición eutéctica x_E</td><td>'+d.eut.xE.toFixed(3)+'</td><td>'+(ref.xe!=null?ref.xe.toFixed(3):'—')+'</td>'+devCell(d.eut.xE,ref.xe)+'</tr>';
+      rows+='<tr><td>Solubilidad máx. de B en α</td><td>'+(solA!=null?solA.toFixed(3):'—')+'</td><td>'+(ref.solA!=null?ref.solA.toFixed(3):'—')+'</td>'+devCell(solA,ref.solA)+'</tr>';
+    }else{
+      rows+='<tr><td>Lente isomorfa (sin eutéctico)</td><td>✓ presente</td><td>'+(state.preset==='cuni'?'✓ solubilidad total':'—')+'</td><td><span class="dev ok">cualitativo ✓</span></td></tr>';
+    }
+    rows+='<tr><td>T fusión A ('+pr.A+')</td><td>'+state.params.TmA.toFixed(1)+' K</td><td>'+PRESETS[state.preset==='custom'?'generic':state.preset].params.TmA.toFixed(1)+' K</td><td><span class="dev ok">exacta · construcción</span></td></tr>';
+    rows+='<tr><td>T fusión B ('+pr.B+')</td><td>'+state.params.TmB.toFixed(1)+' K</td><td>'+PRESETS[state.preset==='custom'?'generic':state.preset].params.TmB.toFixed(1)+' K</td><td><span class="dev ok">exacta · construcción</span></td></tr>';
+    tb.innerHTML=rows;
+    note.innerHTML='<b>Lectura honesta:</b> '+(ref.note||PRESETS.generic.ref.note)+' Frente a CALPHAD (SGTE), este modelo usa Ω constantes y una única red sólida: suficiente para topología y pedagogía, insuficiente para diseño de aleaciones.';
+  }else if(state.mode==='miscibility'){
+    sys.textContent='Solución regular';
+    const d=miscD;
+    tb.innerHTML=
+      '<tr><td>T_c del modelo (numérico en el diagrama)</td><td>'+d.Tc.toFixed(1)+' K</td><td>Ω/2R = '+d.Tc.toFixed(1)+' K</td><td><span class="dev ok">0.0 % · analítico</span></td></tr>'+
+      '<tr><td>Binodal vs espinodal</td><td>x_b &lt; x_s ✓</td><td>orden teórico</td><td><span class="dev ok">✓</span></td></tr>'+
+      '<tr><td>Cinética de descomposición</td><td>no modelada</td><td>Cahn–Hilliard</td><td><span class="dev mid">fuera de alcance</span></td></tr>';
+    note.innerHTML='<b>Lectura honesta:</b> la solución regular simétrica da la topología exacta de la laguna, pero los exponentes críticos reales (β ≈ 0.325, Ising 3D) difieren del campo medio (β = 0.5). El modelo es de campo medio por construcción.';
+  }else{
+    sys.textContent='H₂O · P–T';
+    const L373=clausiusL(373.15);
+    tb.innerHTML=
+      '<tr><td>P vaporización (Wagner)</td><td>IAPWS-95 supp.</td><td>exacta en [T_t, T_c]</td><td><span class="dev ok">✓ referencia</span></td></tr>'+
+      '<tr><td>P sublimación</td><td>IAPWS R14-08</td><td>exacta en [50, 273.16] K</td><td><span class="dev ok">✓ referencia</span></td></tr>'+
+      '<tr><td>Fusión hielo Ih</td><td>IAPWS R14-08 (3 términos)</td><td>exacta en [251.165, 273.16] K</td><td><span class="dev ok">✓ referencia</span></td></tr>'+
+      '<tr><td>Fusión hielos III–VII</td><td>Simon–Glatzel, c = 3</td><td>anclada a puntos triples IAPWS</td><td><span class="dev mid">△ aprox. interp.</span></td></tr>'+
+      '<tr><td>Fronteras sólido–sólido</td><td>verticales en T triple</td><td>inclinadas en la realidad</td><td><span class="dev mid">△ aprox.</span></td></tr>'+
+      '<tr><td>L̂ vaporización a 373.15 K</td><td>'+(L373/1000).toFixed(2)+' kJ/mol</td><td>40.657 kJ/mol</td>'+devCell(L373/1000,40.657)+'</tr>'+
+      '<tr><td>Hielos II, IX, XI, XII…</td><td>no incluidos</td><td>17+ polimorfos conocidos</td><td><span class="dev bad">✗ futuro</span></td></tr>';
+    note.innerHTML='<b>Lectura honesta:</b> las curvas de vapor, sublimación y fusión Ih son las ecuaciones oficiales IAPWS. Los hielos de alta presión usan Simon–Glatzel anclado a los puntos triples experimentales: topología correcta, cifras intermedias aproximadas.';
+  }
+}
+function updateLegend(){
+  const lg=$('#legend');let keys;
+  if(state.mode==='eutectic')keys=['L','α','β','α+L','L+β','α+β'];
+  else if(state.mode==='miscibility')keys=['α','meta','unstable'];
+  else keys=Object.keys(WREG);
+  lg.innerHTML=keys.map(k=>{
+    const r=REG[k]||WREG[k];
+    const bg=Array.isArray(r.fill)?'rgb('+r.fill.join(',')+')':r.fill;
+    return '<button class="lchip" data-key="'+k+'"><i class="'+(r.hatch?'hatch':'')+'" style="background-color:'+bg+'"></i>'+r.name+'</button>';
+  }).join('');
+  lg.querySelectorAll('.lchip').forEach(el=>el.addEventListener('click',()=>{
+    const k=el.dataset.key,r=REG[k];
+    const desc=r?r.desc:({
+      'vapor':'Fase gaseosa: por debajo de la curva de saturación o sublimación.',
+      'líquido':'Agua líquida: entre la curva de saturación y las líneas de fusión.',
+      'fluido supercrítico':'Más allá de 647.096 K y 22.064 MPa: sin distinción líquido–gas. Disuelve como líquido, difunde como gas.',
+      'hielo Ih':'Hielo hexagonal cotidiano. Única sustancia común cuya línea de fusión tiene pendiente negativa: la presión lo funde.',
+      'hielo III':'Polimorfo tetragonal, estable desde ~209 MPa.',
+      'hielo V':'Polimorfo monoclinico, ~350–632 MPa.',
+      'hielo VI':'Polimorfo tetragonal, ~0.6–2.2 GPa. Existe agua sólida a temperatura ambiente.',
+      'hielo VII':'Polimorfo cúbico de alta presión, por encima de ~2.2 GPa. Relevante en interiores planetarios.'
+    })[k]||'';
+    toast((r?r.name:WREG[k].name)+' — '+desc,'info');blip(FREQ[k]||520,0.03);
+  }));
+}
+
+/* ================================================================
+   PIPELINE DE DIBUJO
+   ================================================================ */
+let needCompute=false,needDraw=false,raf=0;
+function schedule(compute){needCompute=needCompute||compute;needDraw=true;if(!raf)raf=requestAnimationFrame(frame);}
+function frame(){raf=0;if(needCompute){needCompute=false;rebuild();}if(needDraw){needDraw=false;draw();}}
+function rebuild(){
+  if(state.mode==='eutectic'){diagram=computeBinary();syncTRange();renderBinaryBase();}
+  else if(state.mode==='miscibility'){miscD=computeMisc();syncTRange();renderMiscBase();}
+  else renderWaterBase();
+}
+function draw(){
+  mctx.clearRect(0,0,LAY.cw,LAY.ch);
+  mctx.drawImage(baseC,0,0,baseC.width,baseC.height,0,0,LAY.cw,LAY.ch);
+  drawOverlay();drawG();updateCards();updateBadges();updateLimits();
+}
+function syncTRange(){
+  const s=$('#TSlider');
+  if(state.mode==='eutectic'){s.min=diagram.Tmin.toFixed(1);s.max=diagram.Tmax.toFixed(1);state.T=clamp(state.T,diagram.Tmin,diagram.Tmax);s.value=state.T;}
+  else if(state.mode==='miscibility'){s.min=miscD.Tmin;s.max=miscD.Tmax.toFixed(1);state.misc.T=clamp(state.misc.T,miscD.Tmin,miscD.Tmax);s.value=state.misc.T;}
+  else{s.min=W.Tmin;s.max=W.Tmax;s.value=state.water.T;}
+  syncOutputs();
+}
+function syncOutputs(){
+  $('#TVal').textContent=fmtK(state.mode==='water'?state.water.T:state.mode==='miscibility'?state.misc.T:state.T);
+  $('#xVal').textContent=(state.mode==='miscibility'?state.misc.x0:state.x0).toFixed(3);
+  $('#PVal').textContent=fmtPa(Math.pow(10,state.water.logP));
+  $('#omVal').textContent=(state.misc.omega/1000).toFixed(1)+' kJ/mol';
+  const p=state.params;
+  $('#L0Val').textContent=(p.L0/1000).toFixed(1)+' kJ/mol';
+  $('#L1Val').textContent=(p.L1>=0?'+':'')+(p.L1/1000).toFixed(1)+' kJ/mol';
+  $('#omLVal').textContent=(p.omL/1000).toFixed(1)+' kJ/mol';
+  $('#TmAVal').textContent=fmtK(p.TmA);$('#TmBVal').textContent=fmtK(p.TmB);
+}
+function syncSliders(){
+  $('#xSlider').value=state.mode==='miscibility'?state.misc.x0:state.x0;
+  $('#PSlider').value=state.water.logP;
+  $('#omSlider').value=state.misc.omega;
+  const p=state.params;
+  $('#L0Slider').value=p.L0;$('#L1Slider').value=p.L1;$('#omLSlider').value=p.omL;
+  $('#TmASlider').value=p.TmA;$('#TmBSlider').value=p.TmB;
+  syncTRange();
+}
+
+/* ---------------- cambio de modo / preset ---------------- */
+function setMode(mode){
+  state.mode=mode;lastKey=null;
+  $$('#modeSeg button').forEach(b=>{const on=b.dataset.mode===mode;b.classList.toggle('active',on);b.setAttribute('aria-selected',on);});
+  $$('[data-modes]').forEach(el=>el.classList.toggle('hidden',!el.dataset.modes.split(' ').includes(mode)));
+  $('#gPanel').classList.toggle('hidden',mode==='water');
+  $('#ctrlMode').textContent=mode==='water'?'P–T':mode==='miscibility'?'REGULAR':'BINARIO';
+  $('#stateMode').textContent=mode==='water'?'P–T':'T–x';
+  $('#stageTitle').textContent=mode==='eutectic'?'Diagrama eutéctico binario · T–x':mode==='miscibility'?'Lacuna de miscibilidad · T–x':'Agua · P–T (log)';
+  $('#gTitle').textContent=mode==='miscibility'?'G(x) · solución regular':'G(x) · tangente común';
+  $('#randBtn').textContent=mode==='water'?'⚄ Salto aleatorio':'⚄ Aleatorio';
+  updateLegend();syncSliders();schedule(true);
+}
+function setPreset(v){
+  if(v==='custom')return;
+  state.preset=v;state.params={...PRESETS[v].params};
+  $('#presetSel').value=v;
+  rebuild();
+  if(diagram&&diagram.eut)state.T=clamp(diagram.eut.T+(diagram.Tmax-diagram.Tmin)*0.07,diagram.Tmin,diagram.Tmax);
+  else state.T=(diagram.Tmin+diagram.Tmax)/2;
+  syncSliders();schedule(false);
+  toast('Preset cargado: '+PRESETS[v].name+' — '+PRESETS[v].A+'–'+PRESETS[v].B,'info');
+}
+
+/* ---------------- interacción con el lienzo ---------------- */
+function currentKey(){
+  if(state.mode==='eutectic')return binaryState().phases.map(p=>p.label).join('+');
+  if(state.mode==='miscibility'){const s=miscState();return s.zone==='estable'?'α':s.zone;}
+  return waterAt(state.water.T,Math.pow(10,state.water.logP));
+}
+function pointFromEvent(e){
+  const r=mainC.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top;
+  const {l,t,pw,ph}=LAY;
+  const fx=clamp((px-l)/pw,0,1),fy=clamp((py-t)/ph,0,1);
+  const before=currentKey();
+  if(state.mode==='eutectic'){state.x0=fx;state.T=diagram.Tmax-fy*(diagram.Tmax-diagram.Tmin);}
+  else if(state.mode==='miscibility'){state.misc.x0=fx;state.misc.T=miscD.Tmax-fy*(miscD.Tmax-miscD.Tmin);}
+  else{state.water.T=W.Tmin+fx*(W.Tmax-W.Tmin);state.water.logP=W.lpMax-fy*(W.lpMax-W.lpMin);}
+  const after=currentKey();
+  if(after!==before){blip(FREQ[after]||FREQ[after.split('+')[0]]||440);lastKey=after;}
+  syncSliders();schedule(false);
+}
+let dragging=false;
+mainC.addEventListener('pointerdown',e=>{dragging=true;mainC.setPointerCapture(e.pointerId);pointFromEvent(e);e.preventDefault();});
+mainC.addEventListener('pointermove',e=>{
+  if(dragging){pointFromEvent(e);return;}
+  const r=mainC.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top;
+  const {l,t,pw,ph}=LAY,tip=$('#tooltip');
+  if(px<l||px>l+pw||py<t||py>t+ph){tip.classList.remove('show');return;}
+  const fx=(px-l)/pw,fy=(py-t)/ph;let txt;
+  if(state.mode==='eutectic'){
+    const T=diagram.Tmax-fy*(diagram.Tmax-diagram.Tmin);
+    const row=diagram.rows[clamp(Math.round((diagram.Tmax-T)/diagram.dT),0,diagram.rows.length-1)];
+    const seg=row.segs.find(s=>fx>=s.x0&&fx<=s.x1);
+    txt=fmtK(T)+' · x '+fx.toFixed(2)+' → '+(seg?seg.key:'—');
+  }else if(state.mode==='miscibility'){
+    const T=miscD.Tmax-fy*(miscD.Tmax-miscD.Tmin);
+    let z='α estable';
+    if(T<miscD.Tc){const xb=miscBinodal(miscD.om,T),sp=Math.sqrt(1-2*R*T/miscD.om),xs1=(1-sp)/2;
+      if(fx>xb&&fx<1-xb)z=(fx>xs1&&fx<1-xs1)?'inestable':'metaestable';}
+    txt=fmtK(T)+' · x '+fx.toFixed(2)+' → '+z;
+  }else{
+    const T=W.Tmin+fx*(W.Tmax-W.Tmin),P=Math.pow(10,W.lpMax-fy*(W.lpMax-W.lpMin));
+    txt=fmtK(T)+' · '+fmtPa(P)+' → '+waterAt(T,P);
+  }
+  tip.textContent=txt;tip.style.left=px+'px';tip.style.top=py+'px';tip.classList.add('show');
+});
+mainC.addEventListener('pointerup',e=>{dragging=false;try{mainC.releasePointerCapture(e.pointerId);}catch(_){}});
+mainC.addEventListener('pointerleave',()=>{$('#tooltip').classList.remove('show');});
+mainC.addEventListener('keydown',e=>{
+  const mult=e.shiftKey?5:1;let used=true;const before=currentKey();
+  const dT=state.mode==='water'?(W.Tmax-W.Tmin)/200:state.mode==='eutectic'?(diagram.Tmax-diagram.Tmin)/200:(miscD.Tmax-miscD.Tmin)/200;
+  if(state.mode==='water'){
+    if(e.key==='ArrowLeft')state.water.T-=dT*mult;else if(e.key==='ArrowRight')state.water.T+=dT*mult;
+    else if(e.key==='ArrowUp')state.water.logP+=0.05*mult;else if(e.key==='ArrowDown')state.water.logP-=0.05*mult;else used=false;
+    state.water.T=clamp(state.water.T,W.Tmin,W.Tmax);state.water.logP=clamp(state.water.logP,W.lpMin,W.lpMax);
+  }else{
+    const isE=state.mode==='eutectic',T=isE?state.T:state.misc.T,x=isE?state.x0:state.misc.x0;
+    let nT=T,nx=x;
+    if(e.key==='ArrowLeft')nx-=0.01*mult;else if(e.key==='ArrowRight')nx+=0.01*mult;
+    else if(e.key==='ArrowUp')nT+=dT*mult;else if(e.key==='ArrowDown')nT-=dT*mult;else used=false;
+    const d=isE?diagram:miscD;
+    nT=clamp(nT,d.Tmin,d.Tmax);nx=clamp(nx,0,1);
+    if(isE){state.T=nT;state.x0=nx;}else{state.misc.T=nT;state.misc.x0=nx;}
+  }
+  if(used){e.preventDefault();
+    const after=currentKey();if(after!==before)blip(FREQ[after]||440);
+    syncSliders();schedule(false);}
+});
+
+/* ---------------- controles ---------------- */
+$$('#modeSeg button').forEach(b=>b.addEventListener('click',()=>{setMode(b.dataset.mode);blip(600,0.03);}));
+$('#presetSel').addEventListener('change',e=>setPreset(e.target.value));
+$('#TSlider').addEventListener('input',e=>{
+  const v=parseFloat(e.target.value),before=currentKey();
+  if(state.mode==='water')state.water.T=v;else if(state.mode==='miscibility')state.misc.T=v;else state.T=v;
+  const after=currentKey();if(after!==before)blip(FREQ[after]||440);
+  syncOutputs();schedule(false);
+});
+$('#xSlider').addEventListener('input',e=>{
+  const v=parseFloat(e.target.value),before=currentKey();
+  if(state.mode==='miscibility')state.misc.x0=v;else state.x0=v;
+  const after=currentKey();if(after!==before)blip(FREQ[after]||440);
+  syncOutputs();schedule(false);
+});
+$('#PSlider').addEventListener('input',e=>{
+  const before=currentKey();state.water.logP=parseFloat(e.target.value);
+  const after=currentKey();if(after!==before)blip(FREQ[after]||440);
+  syncOutputs();schedule(false);
+});
+$('#omSlider').addEventListener('input',e=>{state.misc.omega=parseFloat(e.target.value);syncOutputs();schedule(true);});
+for(const [id,key] of [['L0Slider','L0'],['L1Slider','L1'],['omLSlider','omL'],['TmASlider','TmA'],['TmBSlider','TmB']]){
+  $('#'+id).addEventListener('input',e=>{
+    state.params[key]=parseFloat(e.target.value);
+    state.preset='custom';$('#presetSel').value='custom';
+    syncOutputs();schedule(true);
+  });
+}
+$('#togSpin').addEventListener('change',e=>{state.show.spin=e.target.checked;schedule(false);});
+$('#togTie').addEventListener('change',e=>{state.show.tie=e.target.checked;schedule(false);});
+$('#togGrid').addEventListener('change',e=>{state.show.grid=e.target.checked;schedule(true);});
+$('#togLabels').addEventListener('change',e=>{state.show.labels=e.target.checked;schedule(true);});
+
+$('#resetBtn').addEventListener('click',()=>{
+  if(state.mode==='eutectic')setPreset(state.preset==='custom'?'pbsn':state.preset);
+  else if(state.mode==='miscibility'){state.misc={omega:18000,T:800,x0:0.35};syncSliders();schedule(true);toast('Lacuna restaurada a Ω = 18 kJ/mol.');}
+  else{state.water={T:300,logP:5};syncSliders();schedule(false);toast('Agua restaurada a 300 K · 100 kPa.');}
+  blip(523,0.035);
+});
+$('#randBtn').addEventListener('click',()=>{
+  if(state.mode==='eutectic'){
+    const p=state.params,base=PRESETS[state.preset==='custom'?'generic':state.preset].params;
+    p.L0=Math.round((6000+Math.random()*22000)/100)*100;
+    p.L1=Math.round((Math.random()-0.5)*16000/100)*100;
+    p.omL=Math.round((Math.random()*5000-1000)/100)*100;
+    p.TmA=Math.round(base.TmA*(0.85+Math.random()*0.3)/5)*5;
+    p.TmB=Math.round(base.TmB*(0.85+Math.random()*0.3)/5)*5;
+    state.preset='custom';$('#presetSel').value='custom';
+    syncSliders();schedule(true);toast('Parámetros aleatorios: L₀='+(p.L0/1000).toFixed(1)+' kJ, L₁='+(p.L1/1000).toFixed(1)+' kJ.','info');
+  }else if(state.mode==='miscibility'){
+    state.misc.omega=Math.round((8000+Math.random()*28000)/100)*100;
+    syncSliders();schedule(true);toast('Ω aleatoria = '+(state.misc.omega/1000).toFixed(1)+' kJ/mol → T_c = '+(state.misc.omega/(2*R)).toFixed(0)+' K.','info');
+  }else{
+    state.water.T=200+Math.random()*560;state.water.logP=Math.random()*9.8;
+    syncSliders();schedule(false);
+    toast('Salto aleatorio → '+waterAt(state.water.T,Math.pow(10,state.water.logP))+'.','info');
+  }
+  blip(660,0.04);
+});
+const NOTABLES=[
+  ['Punto triple',273.16,Math.log10(611.657)],
+  ['Punto crítico',647.096,Math.log10(22.064e6)],
+  ['Ebullición a 1 atm',373.124,Math.log10(101325)],
+  ['Nieve a −20 °C',253.15,Math.log10(103)],
+  ['Triple Ih–III–Líquido',251.165,Math.log10(208.566e6)],
+  ['Triple III–V–Líquido',256.164,Math.log10(350.1e6)],
+  ['Triple V–VI–Líquido',273.31,Math.log10(632.4e6)],
+  ['Triple VI–VII–Líquido',355,Math.log10(2216e6)],
+  ['Hielo VII a 500 K',500,Math.log10(6e9)]
+];
+$('#notableBtn').addEventListener('click',()=>{
+  const n=NOTABLES[notableIdx%NOTABLES.length];notableIdx++;
+  state.water.T=n[1];state.water.logP=n[2];
+  syncSliders();schedule(false);
+  toast('◈ '+n[0]+' — '+fmtK(n[1])+' · '+fmtPa(Math.pow(10,n[2])),'info');
+  blip(784,0.04);
+});
+
+/* ---------------- sonido ---------------- */
+$('#soundBtn').addEventListener('click',()=>{
+  state.sound=!state.sound;
+  const b=$('#soundBtn');b.classList.toggle('off',!state.sound);
+  b.setAttribute('aria-pressed',state.sound);
+  $('#soundLbl').textContent=state.sound?'SONIDO ON':'SONIDO OFF';
+  if(state.sound)blip(740,0.04);
+  toast(state.sound?'Sonificación de transiciones activada.':'Todo el sonido silenciado.','info');
+});
+document.addEventListener('pointerdown',function warm(){if(state.sound)blip(1,0.0001);document.removeEventListener('pointerdown',warm);},{once:true});
+
+/* ---------------- exportaciones ---------------- */
+function download(name,blob){
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+$('#pngBtn').addEventListener('click',()=>{
+  const W2=1500,H2=950,c=document.createElement('canvas');c.width=W2;c.height=H2;
+  const x=c.getContext('2d');
+  x.fillStyle='#0A1322';x.fillRect(0,0,W2,H2);
+  const grad=x.createLinearGradient(0,0,W2,0);
+  grad.addColorStop(0,'#7FD4FF');grad.addColorStop(.55,'#E85BD0');grad.addColorStop(1,'#FFB020');
+  x.fillStyle=grad;x.fillRect(0,0,W2,5);
+  x.fillStyle='#F2EAD9';x.font='700 34px Space Grotesk,sans-serif';
+  x.fillText('PHASEMAP',48,64);
+  x.font='500 17px IBM Plex Mono,monospace';x.fillStyle='#93A7C4';
+  x.fillText($('#stageTitle').textContent,48,94);
+  let pl;
+  if(state.mode==='eutectic'){const p=state.params;pl='T='+state.T.toFixed(1)+' K · x0='+state.x0.toFixed(3)+' · L0='+(p.L0/1000).toFixed(1)+'k · L1='+(p.L1/1000).toFixed(1)+'k · ΩL='+(p.omL/1000).toFixed(1)+'k · TmA='+p.TmA+' · TmB='+p.TmB;}
+  else if(state.mode==='miscibility')pl='Ω='+(state.misc.omega/1000).toFixed(1)+' kJ/mol · Tc='+(state.misc.omega/(2*R)).toFixed(1)+' K · T='+state.misc.T.toFixed(1)+' K · x0='+state.misc.x0.toFixed(3);
+  else pl='T='+state.water.T.toFixed(2)+' K · P='+fmtPa(Math.pow(10,state.water.logP))+' · fase: '+waterAt(state.water.T,Math.pow(10,state.water.logP));
+  x.fillText(pl,48,122);
+  const mw=980,mh=mw*LAY.ch/LAY.cw;
+  x.drawImage(mainC,0,0,mainC.width,mainC.height,48,150,mw,mh);
+  x.strokeStyle='rgba(127,212,255,.3)';x.strokeRect(48,150,mw,mh);
+  let sy=190;const sx=1070;
+  x.fillStyle='#7FD4FF';x.font='600 15px IBM Plex Mono,monospace';
+  x.fillText('PUNTO DE ESTADO',sx,sy);sy+=28;
+  x.font='500 14px IBM Plex Mono,monospace';
+  const lines=$('#stateBody').innerText.split('\n').filter(s=>s.trim());
+  x.fillStyle='#F2EAD9';
+  for(const ln of lines.slice(0,14)){x.fillText(ln.slice(0,42),sx,sy);sy+=22;}
+  if(state.mode!=='water'){
+    sy+=16;x.fillStyle='#7FD4FF';x.font='600 15px IBM Plex Mono,monospace';
+    x.fillText('G(x) · TANGENTE COMÚN',sx,sy);sy+=16;
+    const gw=380,gh=gw*gC.height/gC.width;
+    x.drawImage(gC,0,0,gC.width,gC.height,sx,sy,gw,gh);
+    x.strokeStyle='rgba(127,212,255,.3)';x.strokeRect(sx,sy,gw,gh);
+  }
+  x.fillStyle='#5f7796';x.font='500 13px IBM Plex Mono,monospace';
+  x.fillText('phasemap · serie científica · AGPL-3.0 · solución regular + RK / IAPWS · límites declarados en docs/',48,H2-32);
+  c.toBlob(b=>{download('phasemap_'+state.mode+'.png',b);toast('PNG exportado con el estado actual.');blip(880,0.04);},'image/png');
+});
+$('#csvBtn').addEventListener('click',()=>{
+  let csv='',n=0,name='phasemap_'+state.mode+'.csv';
+  if(state.mode==='eutectic'){
+    csv='T_K,x_solvus_alpha,x_solidus_alpha,x_liquidus_alpha,x_liquidus_beta,x_solidus_beta,x_solvus_beta\n';
+    for(const row of diagram.rows){
+      const m={};
+      for(let i=0;i<row.segs.length-1;i++)m[row.segs[i].key+'|'+row.segs[i+1].key]=row.segs[i].x1;
+      const g=k=>m[k]!=null?m[k].toFixed(5):'';
+      csv+=[row.T.toFixed(2),g('α|α+β'),g('α|α+L'),g('α+L|L'),g('L|L+β')||g('L|α+L'),g('L+β|β')||g('α+L|α'),g('α+β|β')].join(',')+'\n';n++;
+    }
+  }else if(state.mode==='miscibility'){
+    csv='T_K,x_binodal_left,x_binodal_right,x_spinodal_left,x_spinodal_right\n';
+    for(const row of miscD.rows){
+      csv+=row.xb1!=null?[row.T.toFixed(2),row.xb1.toFixed(5),row.xb2.toFixed(5),row.xs1.toFixed(5),row.xs2.toFixed(5)].join(',')+'\n':row.T.toFixed(2)+',,,,\n';n++;
+    }
+  }else{
+    csv='T_K,p_sublimation_Pa,p_vaporization_Pa,p_melt_Ih_Pa,p_melt_III_Pa,p_melt_V_Pa,p_melt_VI_Pa,p_melt_VII_Pa\n';
+    for(let T=180;T<=800;T+=2){
+      const f=v=>v!=null?v.toExponential(6):'';
+      csv+=[T,f(pSubl(T)),f(pVap(T)),f(pMeltIh(T)),f(pMeltIII(T)),f(pMeltV(T)),f(pMeltVI(T)),f(pMeltVII(T))].join(',')+'\n';n++;
+    }
+  }
+  download(name,new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  toast('CSV exportado — '+n+' filas de fronteras listas para data/.');blip(880,0.04);
+});
+$('#copyBtn').addEventListener('click',()=>{
+  const snap={mode:state.mode,preset:state.preset,params:state.params,
+    T:state.T,x0:state.x0,misc:state.misc,water:state.water,
+    computed:state.mode==='eutectic'&&diagram?{eutectic:diagram.eut,state:binaryState().phases}:
+      state.mode==='miscibility'&&miscD?{Tc:miscD.Tc,state:miscState().phases}:
+      {phase:waterAt(state.water.T,Math.pow(10,state.water.logP))}};
+  const txt=JSON.stringify(snap,null,2);
+  const done=()=>{toast('Estado copiado al portapapeles — pégalo en un test fixture.');blip(880,0.04);};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done).catch(()=>fallbackCopy(txt,done));
+  else fallbackCopy(txt,done);
+});
+function fallbackCopy(txt,done){
+  const ta=document.createElement('textarea');ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');done();}catch(e){toast('No se pudo copiar en este navegador.','warn');}
+  ta.remove();
+}
+
+/* ---------------- scroll: revelado, spy, parallax ---------------- */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:0.12});
+$$('.reveal').forEach(el=>io.observe(el));
+const spy=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){
+    document.body.dataset.sec=e.target.id;
+    $$('.nav-link').forEach(a=>a.classList.toggle('active',a.dataset.spy===e.target.id));
+  }
+}),{rootMargin:'-38% 0px -55% 0px'});
+['lab','modelo','repo'].forEach(id=>spy.observe(document.getElementById(id)));
+let ticking=false;
+window.addEventListener('scroll',()=>{
+  if(ticking)return;ticking=true;
+  requestAnimationFrame(()=>{$('#bgGrid').style.transform='translateY('+(window.scrollY*0.12)+'px)';ticking=false;});
+},{passive:true});
+
+/* ---------------- resize ---------------- */
+let rto=null;
+const ro=new ResizeObserver(()=>{clearTimeout(rto);rto=setTimeout(()=>{sizeCanvases();schedule(true);},120);});
+ro.observe($('#mainWrap'));ro.observe(gC.parentElement);
+
+/* ---------------- init ---------------- */
+sizeCanvases();
+setMode('eutectic');
+rebuild();
+if(diagram.eut)state.T=clamp(diagram.eut.T+(diagram.Tmax-diagram.Tmin)*0.07,diagram.Tmin,diagram.Tmax);
+state.x0=diagram.eut?clamp(diagram.eut.xE-0.12,0.05,0.95):0.4;
+syncSliders();
+schedule(false);
+</script>
+</body>
+</html>
