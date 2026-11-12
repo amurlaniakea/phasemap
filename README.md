@@ -44,4 +44,4 @@ binodal/espinodal, Wagner/IAPWS, Clausius-Clapeyron. Limites: docs/limits.md.
 
 ## Licencia
 
-AGPL-3.0-only · Pedro Sordo Martinez · serie Orbitae / Relmap / Phasemap.
+AGPL-3.0-or-later · Pedro Sordo Martínez · serie Orbitae / Relmap / Phasemap.

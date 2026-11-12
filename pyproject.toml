@@ -8,13 +8,12 @@ version = "0.1.0"
 description = "Diagramas de fase verificables: solucion regular, Redlich-Kister e IAPWS. Nucleo stdlib, visor web sin dependencias."
 readme = "README.md"
 requires-python = ">=3.10"
-license = {text = "AGPL-3.0-only"}
-authors = [{name = "Pedro Sordo Martinez"}]
+license = "AGPL-3.0-or-later"
+authors = [{name = "Pedro Sordo Martínez", email = "amurlaniakea@gmail.com"}]
 keywords = ["thermodynamics", "phase-diagrams", "eutectic", "calphad", "iapws", "gibbs"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: GNU Affero General Public License v3",
   "Programming Language :: Python :: 3",
   "Topic :: Scientific/Engineering :: Physics",
   "Topic :: Scientific/Engineering :: Chemistry",
