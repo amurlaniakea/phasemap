@@ -1,49 +1,28 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2026 Pedro Sordo Martínez <amurlaniakea@gmail.com>
-#
-# SPDX-License-Identifier: AGPL-3.0-or-later
-#
-# Copyright (C) 2026 Pedro Sordo Martínez
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as
-# published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU Affero General Public License for more details.
-#
-# You should have received a copy of the GNU Affero General Public
-# License along with this program. If not, see
-# <https://www.gnu.org/licenses/>.
-"""Fase 5: sincroniza el visor web con el nucleo afinado y corrige el etiquetado.
-Uso: python scripts/patch_viewer.py   (idempotente; informa cada cambio)"""
-import os, sys
+# SPDX-License-Identifier: AGPL-3.0-only
+"""Fase 5 (robusto): sincroniza preset, BCAT y computeBinary del visor.
+Tolerante a BCAT multilinea / reordenado. Idempotente. Uso: python scripts/patch_viewer.py"""
+import os, re, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PATH = os.path.join(ROOT, "web", "index.html")
 src = open(PATH, encoding="utf-8").read()
 orig = src
 changes = []
 
-old = "L0:9500,L1:3500,omL:800"
-new = "L0:8000,L1:6000,omL:4000"
-if old in src:
-    src = src.replace(old, new); changes.append("preset Pb-Sn -> L0=8000,L1=6000,omL=4000")
-elif new in src:
-    changes.append("preset Pb-Sn ya sincronizado")
+pat = re.compile(r"(pbsn:.*?L0:)[0-9.]+(,L1:)[0-9.-]+(,omL:)[0-9.-]+", re.DOTALL)
+if pat.search(src):
+    src = pat.sub(r"\g<1>8000\g<2>6000\g<3>4000", src, count=1)
+    changes.append("preset Pb-Sn -> L0=8000,L1=6000,omL=4000")
 else:
-    print("AVISO: no se encontro el preset Pb-Sn original"); sys.exit(1)
+    print("AVISO preset: no se encontro el bloque pbsn"); sys.exit(1)
 
-old_bcat = "const BCAT={'α|α+L':'solidus','α+L|α':'solidus','α+L|L':'liquidus','L|α+L':'liquidus','L|L+β':'liquidus','L+β|β':'solidus','α|α+β':'solvus','α+β|β':'solvus'};"
-new_bcat = "const BCAT={'α|α+L':'solidus','α+L|α':'solidus','L+β|β':'solidus','β|β+L':'solidus','L+α|α':'solidus','α+L|L':'liquidus','L|α+L':'liquidus','L|L+β':'liquidus','L|L+α':'liquidus','β+L|L':'liquidus','α|α+β':'solvus','α+β|β':'solvus'};"
-if old_bcat in src:
-    src = src.replace(old_bcat, new_bcat); changes.append("BCAT + claves espejo (Cu-Ni liquidus/solidus)")
-elif new_bcat in src:
-    changes.append("BCAT ya corregido")
+NEW_BCAT = "const BCAT={'α|α+L':'solidus','α+L|α':'solidus','L+β|β':'solidus','β|β+L':'solidus','L+α|α':'solidus','α+L|L':'liquidus','L|α+L':'liquidus','L|L+β':'liquidus','L|L+α':'liquidus','β+L|L':'liquidus','α|α+β':'solvus','α+β|β':'solvus'};"
+bpat = re.compile(r"const BCAT=\{[^}]*\}", re.DOTALL)
+if bpat.search(src):
+    src = bpat.sub(NEW_BCAT, src, count=1)
+    changes.append("BCAT completo + claves espejo (Cu-Ni liquidus/solidus)")
 else:
-    print("AVISO: no se encontro BCAT original"); sys.exit(1)
+    print("AVISO BCAT: no se encontro const BCAT"); sys.exit(1)
 
 NEW_FN = r"""function computeBinary(){
   const p=state.params,m=makeModel(p);
@@ -134,9 +113,9 @@ i = src.find("function computeBinary(){")
 j = src.find("function binaryState(){")
 if i != -1 and j != -1 and j > i:
     src = src[:i] + NEW_FN.rstrip() + "\n" + src[j:]
-    changes.append("computeBinary: dedupe + fusion de regiones + etiquetas alpha/beta correctas")
+    changes.append("computeBinary corregido (dedupe + fusion + etiquetas alpha/beta)")
 else:
-    print("AVISO: no se encontraron las anclas computeBinary/binaryState"); sys.exit(1)
+    print("AVISO anclas: computeBinary en", i, "| binaryState en", j); sys.exit(1)
 
 if src != orig:
     open(PATH, "w", encoding="utf-8").write(src)

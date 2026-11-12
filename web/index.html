@@ -581,7 +581,7 @@ const FREQ={'L':740,'α':523,'β':622,'α+L':440,'L+β':560,'α+β':392,'meta':4
 
 /* ---------------- presets y estado ---------------- */
 const PRESETS={
-  pbsn:{name:'Pb–Sn',A:'Pb',B:'Sn',params:{TmA:600.6,TmB:505.1,dHfA:4770,dHfB:7030,L0:9500,L1:3500,omL:800},
+  pbsn:{name:'Pb–Sn',A:'Pb',B:'Sn',params:{TmA:600.6,TmB:505.1,dHfA:4770,dHfB:7030,L0:8000,L1:6000,omL:4000},
     ref:{Te:456.15,xe:0.739,solA:0.293,solB:0.0145,note:'Eutéctico real: 456.15 K · 61.9 %wt Sn. La solución regular (incluso con L₁) no captura las dos redes cristalinas distintas: la desviación es esperable y se declara.'}},
   cuni:{name:'Cu–Ni',A:'Cu',B:'Ni',params:{TmA:1357.8,TmB:1728.3,dHfA:13260,dHfB:17480,L0:2000,L1:0,omL:-800},
     ref:{note:'Sistema isomorfo: solubilidad total en sólido y líquido. Los puntos de fusión puros son exactos por construcción; la lente real requiere Ω(T,x) de CALPHAD.'}},
@@ -662,41 +662,47 @@ function refineTie(m,s,T){
   }
   s.x0=x1;s.x1=x2;
 }
-const BCAT={'α|α+L':'solidus','α+L|α':'solidus','L+β|β':'solidus',
-  'α+L|L':'liquidus','L|α+L':'liquidus','L|L+β':'liquidus',
-  'α|α+β':'solvus','α+β|β':'solvus'};
+const BCAT={'α|α+L':'solidus','α+L|α':'solidus','L+β|β':'solidus','β|β+L':'solidus','L+α|α':'solidus','α+L|L':'liquidus','L|α+L':'liquidus','L|L+β':'liquidus','L|L+α':'liquidus','β+L|L':'liquidus','α|α+β':'solvus','α+β|β':'solvus'};;
 
 function computeBinary(){
   const p=state.params,m=makeModel(p);
   const Tmin=Math.min(p.TmA,p.TmB)*0.55,Tmax=Math.max(p.TmA,p.TmB)*1.15;
   const rows=300,N=320,dx=1/N,dT=(Tmax-Tmin)/(rows-1);
   const dual=p.L0>2*R*Tmin;
-  const n2=2*(N+1),xs=new Float64Array(n2),gs=new Float64Array(n2),ph=new Uint8Array(n2),hull=new Int32Array(n2);
-  for(let i=0;i<=N;i++){xs[2*i]=i/N;xs[2*i+1]=i/N;ph[2*i]=0;ph[2*i+1]=1;}
   const B={solidus:[],liquidus:[],solvus:[]},spots={},spinL=[],spinR=[],rowsOut=[];
   let eut=null,prevL=null;
   for(let r=0;r<rows;r++){
     const T=Tmax-r*dT;
-    for(let i=0;i<=N;i++){const x=i/N;gs[2*i]=m.G(0,x,T);gs[2*i+1]=m.G(1,x,T);}
-    let h=0;
-    for(let k=0;k<n2;k++){
-      while(h>=2){
-        const a=hull[h-2],b=hull[h-1];
-        if((xs[b]-xs[a])*(gs[k]-gs[a])-(gs[b]-gs[a])*(xs[k]-xs[a])<=0)h--;else break;
+    const pts=[];
+    for(let i=0;i<=N;i++){
+      const x=i/N,gS=m.G(0,x,T),gL=m.G(1,x,T);
+      pts.push(gS<=gL?{x,g:gS,p:0}:{x,g:gL,p:1});
+    }
+    const hull=[];
+    for(const q of pts){
+      while(hull.length>=2){
+        const o=hull[hull.length-2],a=hull[hull.length-1];
+        if((a.x-o.x)*(q.g-o.g)-(a.g-o.g)*(q.x-o.x)<=0)hull.pop();else break;
       }
-      hull[h++]=k;
+      hull.push(q);
+    }
+    const raw=[];
+    for(let i=0;i<hull.length-1;i++){
+      const a=hull[i],b=hull[i+1];
+      if(b.x-a.x<1e-12)continue;
+      raw.push({x0:a.x,x1:b.x,p0:a.p,p1:b.p,tie:(b.x-a.x>2.5*dx)||(a.p!==b.p)});
     }
     const segs=[];
-    for(let i=0;i<h-1;i++){
-      const a=hull[i],b=hull[i+1];
-      segs.push({x0:xs[a],x1:xs[b],p0:ph[a],p1:ph[b],
-        tie:(xs[b]-xs[a]>2.5*dx)||(ph[a]!==ph[b])});
+    for(const s of raw){
+      const last=segs[segs.length-1];
+      if(!s.tie&&last&&!last.tie&&last.p0===s.p0)last.x1=s.x1;
+      else segs.push(s);
     }
     for(const s of segs){
       if(s.tie)continue;
-      if(s.p0===1){s.key='L';continue;}
-      if(!dual){s.key='α';continue;}
-      s.key=(s.x0<=1e-9)?'α':(s.x1>=1-1e-9?'β':'α');
+      if(s.p0===1)s.key='L';
+      else if(!dual)s.key='α';
+      else s.key=(s.x0<=1e-9)?'α':(s.x1>=1-1e-9?'β':'α');
     }
     for(let i=0;i<segs.length;i++){
       const s=segs[i];if(!s.tie)continue;
@@ -709,8 +715,13 @@ function computeBinary(){
         s.key=s.p0===0?lab+'+L':'L+'+lab;
       }
       refineTie(m,s,T);
-      s.g0=m.G(s.p0,s.x0,T);s.g1=m.G(s.p1,s.x1,T);
     }
+    for(let i=0;i<segs.length;i++){
+      const s=segs[i];if(s.tie)continue;
+      if(i>0&&segs[i-1].tie&&segs[i-1].x1<=s.x1)s.x0=segs[i-1].x1;
+      if(i+1<segs.length&&segs[i+1].tie&&segs[i+1].x0>=s.x0)s.x1=segs[i+1].x0;
+    }
+    for(const s of segs){s.g0=m.G(s.p0,s.x0,T);s.g1=m.G(s.p1,s.x1,T);}
     for(let i=0;i<segs.length-1;i++){
       const cat=BCAT[segs[i].key+'|'+segs[i+1].key];
       if(cat)B[cat].push([segs[i].x1,T]);
