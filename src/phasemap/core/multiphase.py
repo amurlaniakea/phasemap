@@ -101,29 +101,27 @@ def find_invariants(phases, T, n=400, tol=1e-7):
 
 def scan_multi(phases, Tmin, Tmax, rows=240, n=400):
     dT = (Tmax - Tmin) / (rows - 1)
-    inv, rows_out = [], []
-    prev_singles = None
+    rows_out = []
+    sig = {}
     for r in range(rows):
         T = Tmax - r * dT
         segs, H = equilibrium_multi(phases, T, n)
         rows_out.append((T, segs))
-        singles = [s[5] for s in segs if not s[4]]
-        if prev_singles is not None:
-            if "L" in prev_singles and "L" not in singles:
-                solids = [x for x in singles if x != "L"]
-                if len(solids) >= 2:
-                    inv.append({"T": T, "kind": "eutectico",
-                                "phases": tuple(solids[:2] + ["L"]),
-                                "x0": 0.0, "x1": 1.0})
-            elif "L" in singles and "L" in prev_singles:
-                for b in [x for x in singles if x not in prev_singles and x != "L"]:
-                    inv.append({"T": T, "kind": "peritectico",
-                                "phases": ("L", b, prev_singles[0]),
-                                "x0": 0.0, "x1": 1.0})
-        prev_singles = singles
-    # dedupe consecutivos del mismo tipo
-    out = []
-    for iv in inv:
-        if not out or iv["kind"] != out[-1]["kind"] or abs(iv["T"]-out[-1]["T"]) > 3*dT:
-            out.append(iv)
-    return {"rows": rows_out, "invariants": out, "Tmin": Tmin, "Tmax": Tmax}
+        for a, b, c in zip(H, H[1:], H[2:]):
+            if len({a[2], b[2], c[2]}) < 3:
+                continue
+            cross = (b[0]-a[0])*(c[1]-a[1]) - (b[1]-a[1])*(c[0]-a[0])
+            sig.setdefault((a[2], b[2], c[2]), []).append((T, abs(cross), a[0], c[0]))
+    inv = []
+    for key, vals in sig.items():
+        if len(vals) < 3:
+            continue
+        crosses = [v[1] for v in vals]
+        imin = min(range(len(vals)), key=lambda k: crosses[k])
+        if max(crosses) > 0 and crosses[imin] < 0.05 * max(crosses):
+            T, _, x0, x1 = vals[imin]
+            la, lb, lc = (_lab(phases[key[0]]), _lab(phases[key[1]]), _lab(phases[key[2]]))
+            kind = "eutectico" if lb == "L" else ("peritectico" if "L" in (la, lc) else "solido")
+            inv.append({"T": T, "kind": kind, "phases": (la, lb, lc), "x0": x0, "x1": x1})
+    inv.sort(key=lambda d: -d["T"])
+    return {"rows": rows_out, "invariants": inv, "Tmin": Tmin, "Tmax": Tmax}
