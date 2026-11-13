@@ -3,8 +3,11 @@
 [![tests](https://github.com/amurlaniakea/phasemap/actions/workflows/tests.yml/badge.svg)](https://github.com/amurlaniakea/phasemap/actions/workflows/tests.yml)
 [![pages](https://github.com/amurlaniakea/phasemap/actions/workflows/pages.yml/badge.svg)](https://amurlaniakea.github.io/phasemap/)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24205629.svg)](https://doi.org/10.5281/zenodo.24205629)
 
 **Visores en vivo:** [2 fases](https://amurlaniakea.github.io/phasemap/) · [multifase (Fe–C, Al–Si)](https://amurlaniakea.github.io/phasemap/multifase.html)
+
+![Phasemap — visor de diagramas de fase](docs/screenshot.jpg)
 
 **Diagramas de fase verificables** — solucion regular, Redlich-Kister e IAPWS.
 Nucleo Python stdlib (cero dependencias), suite pytest analitica y visor web Canvas.
@@ -56,6 +59,7 @@ binodal/espinodal, Wagner/IAPWS, Clausius-Clapeyron. Limites: docs/limits.md.
 ## Licencia
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24205629.svg)](https://doi.org/10.5281/zenodo.24205629)
 
 Este proyecto se distribuye bajo la licencia **AGPL-3.0-or-later** (GNU Affero General Public License versión 3 o posterior). Ver el archivo [`LICENSE`](LICENSE) para el texto legal completo.
 
