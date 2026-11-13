@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.4.0
+- Fase 12 cientifica: Redlich-Kister dependiente de T (L0T/L1T, forma G=a+bT de CALPHAD/SGTE). Modulo de referencias assessed (Massalski/ASM, IAPWS) e informe de assessment sistematico (data/assessment.csv + docs/assessment.md). Citacion Zenodo (CITATION.cff + .zenodo.json).
+
+
 ## v0.3.1
 - Corrige el test del eutectoide Fe-C: comprobacion directa del ensamblaje (alpha+Fe3C por debajo, gamma+Fe3C por encima) en vez del detector de invariantes sensible a la resolucion de la malla. Sin cambios en el nucleo ni en los datos.
 

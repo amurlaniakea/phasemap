@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "Phasemap: verifiable phase diagrams"
+type: software
+authors:
+  - family-names: "Sordo Martínez"
+    given-names: Pedro
+license: AGPL-3.0-only
+version: 0.4.0
+date-released: "2026-11-12"
+repository-code: "https://github.com/amurlaniakea/phasemap"
+url: "https://amurlaniakea.github.io/phasemap/"
+keywords:
+  - thermodynamics
+  - phase diagrams
+  - CALPHAD
+  - IAPWS
+  - eutectic
+  - Gibbs free energy

@@ -61,3 +61,7 @@ Este proyecto se distribuye bajo la licencia **AGPL-3.0-or-later** (GNU Affero G
 
 **Autor:** Pedro Sordo Martínez <amurlaniakea@gmail.com>  
 **Serie:** Orbitae · Relmap · Phasemap
+
+## Citación / Citation
+
+Si usas Phasemap, cítalo (botón «Cite this repository» en GitHub, `CITATION.cff`). Archivado en Zenodo con DOI: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX) (sustituye el DOI tras activar la integración Zenodo–GitHub).

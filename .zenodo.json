@@ -1,0 +1,11 @@
+{
+  "title": "Phasemap: verifiable phase diagrams",
+  "description": "Verifiable phase-diagram engine: convex-hull + Newton common-tangent equilibrium, regular-solution/Redlich-Kister and IAPWS water, multiphase compounds and invariant detection, with zero-dependency Canvas viewers and declared limits.",
+  "upload_type": "software",
+  "license": "AGPL-3.0-only",
+  "creators": [{"name": "Sordo Martínez, Pedro"}],
+  "keywords": ["thermodynamics", "phase diagrams", "CALPHAD", "IAPWS", "eutectic", "Gibbs free energy"],
+  "related_identifiers": [
+    {"identifier": "https://github.com/amurlaniakea/phasemap", "relation": "isSupplementTo", "scheme": "url"}
+  ]
+}

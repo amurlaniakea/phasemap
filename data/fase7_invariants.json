@@ -1,106 +1,15 @@
 {
   "al_si": [
     {
-      "T": 1662.7805474226025,
-      "kind": "peritectico",
+      "T": 849.8851908942817,
+      "kind": "eutectico",
       "phases": [
+        "(Al)",
         "(Si)",
-        "L",
-        "(Al)"
+        "L"
       ],
-      "x": 0.9975
+      "x": 0.11
     }
   ],
-  "fe_c": [
-    {
-      "T": 1850.1672271099856,
-      "kind": "eutectico",
-      "phases": [
-        "delta",
-        "gamma",
-        "L"
-      ],
-      "x": 0.0525
-    },
-    {
-      "T": 1828.7625559370774,
-      "kind": "eutectico",
-      "phases": [
-        "Fe3C",
-        "delta",
-        "L"
-      ],
-      "x": 0.275
-    },
-    {
-      "T": 1828.7625441139437,
-      "kind": "solido",
-      "phases": [
-        "Fe3C",
-        "delta",
-        "gamma"
-      ],
-      "x": 0.275
-    },
-    {
-      "T": 1801.44857978302,
-      "kind": "peritectico",
-      "phases": [
-        "L",
-        "delta",
-        "gamma"
-      ],
-      "x": 0.005
-    },
-    {
-      "T": 1777.9264317668985,
-      "kind": "eutectico",
-      "phases": [
-        "Fe3C",
-        "gamma",
-        "L"
-      ],
-      "x": 0.26
-    },
-    {
-      "T": 1547.6256595579189,
-      "kind": "peritectico",
-      "phases": [
-        "Fe3C",
-        "L",
-        "gamma"
-      ],
-      "x": 0.125
-    },
-    {
-      "T": 1531.6122456575765,
-      "kind": "peritectico",
-      "phases": [
-        "Fe3C",
-        "L",
-        "delta"
-      ],
-      "x": 0.1075
-    },
-    {
-      "T": 1454.1806097316294,
-      "kind": "peritectico",
-      "phases": [
-        "L",
-        "gamma",
-        "Fe3C"
-      ],
-      "x": 0.25
-    },
-    {
-      "T": 1395.3177366898537,
-      "kind": "peritectico",
-      "phases": [
-        "L",
-        "delta",
-        "Fe3C"
-      ],
-      "x": 0.25
-    }
-  ]
+  "fe_c": []
 }

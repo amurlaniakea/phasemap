@@ -121,5 +121,26 @@ function mv(e){const r=cv.getBoundingClientRect();const{w,h,l,t,pw,ph}=layout();
 window.onresize=()=>draw();
 setSys('fec');
 </script>
+<style>.lang-btn{font:600 10.5px var(--mono);color:var(--cyan);background:rgba(77,163,255,.08);border:1px solid rgba(77,163,255,.35);border-radius:20px;padding:5px 11px;cursor:pointer;margin-left:auto}</style>
+<script>
+(function(){
+"use strict";
+var DICT={"Controles":"Controls","Sistema":"System","Temperatura":"Temperature","Composición x₀":"Composition x₀",
+"Etiquetas":"Labels","Rejilla":"Grid","Invariantes":"Invariants","Estado e invariantes":"State & invariants",
+"← visor 2 fases":"← 2-phase viewer","repo ↗":"repo ↗","Reset":"Reset",
+"Arrastra para mover el punto de estado. Envoltura convexa sobre N fases; compuestos de línea (Fe₃C, (Si)) como puntos. Invariantes por cruce de margen entre fases.":"Drag to move the state point. Convex hull over N phases; line compounds (Fe₃C, (Si)) as points. Invariants by margin crossing between phases.",
+"eutéctico":"eutectic","peritéctico":"peritectic","sólido":"solid","fracción molar":"mole fraction"};
+var lang="es";try{lang=localStorage.getItem("pm-lang")||"es";}catch(e){}
+var originals=new Map();var applying=false;
+function tr(s){var t=s.trim();if(DICT[t]!==undefined)return s.replace(t,DICT[t]);return s;}
+function walk(root){applying=true;var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null);var n;while((n=w.nextNode())){var p=n.parentNode;if(!p||p.nodeName==="SCRIPT"||p.nodeName==="STYLE")continue;var v=n.nodeValue;if(!v||!v.trim())continue;var t=tr(v);if(t!==v){if(!originals.has(n))originals.set(n,v);n.nodeValue=t;}}applying=false;}
+function toES(){originals.forEach(function(v,n){if(n.isConnected)n.nodeValue=v;});originals.clear();}
+function setLang(l){lang=l;try{localStorage.setItem("pm-lang",l);}catch(e){}document.documentElement.lang=l;if(l==="en"){walk(document.body);}else{toES();}var b=document.getElementById("langBtn");if(b)b.textContent=(l==="en")?"EN ✓":"ES ✓";}
+function addBtn(){var host=document.querySelector("header");if(!host||document.getElementById("langBtn"))return;var b=document.createElement("button");b.id="langBtn";b.className="lang-btn";b.type="button";b.textContent=(lang==="en")?"EN ✓":"ES ✓";b.onclick=function(){setLang(lang==="en"?"es":"en");};host.appendChild(b);}
+var mo=new MutationObserver(function(muts){if(lang!=="en"||applying)return;applying=true;for(var i=0;i<muts.length;i++){var m=muts[i];if(m.type==="childList"){for(var j=0;j<m.addedNodes.length;j++){var nd=m.addedNodes[j];if(nd.nodeType===1){walk(nd);}else if(nd.nodeType===3){var v=nd.nodeValue||"";var t=tr(v);if(t!==v){if(!originals.has(nd))originals.set(nd,v);nd.nodeValue=t;}}}}}applying=false;});
+function init(){addBtn();document.documentElement.lang=lang;if(lang==="en"){walk(document.body);}mo.observe(document.body,{childList:true,subtree:true,characterData:true});}
+if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",init);}else{init();}
+})();
+</script>
 </body>
 </html>

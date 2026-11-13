@@ -33,12 +33,13 @@ from ..core.gibbs import R, clip, mix_entropy, mu_a, mu_b
 
 class RegularPhase:
     def __init__(self, name, L0=0.0, L1=0.0,
-                 dHfA=0.0, TmA=math.inf, dHfB=0.0, TmB=math.inf):
+                 dHfA=0.0, TmA=math.inf, dHfB=0.0, TmB=math.inf, L0T=0.0, L1T=0.0):
         self.name = name
         self.L0 = float(L0)
         self.L1 = float(L1)
         self.dHfA, self.TmA = float(dHfA), float(TmA)
         self.dHfB, self.TmB = float(dHfB), float(TmB)
+        self.L0T, self.L1T = float(L0T), float(L1T)
 
     def _pure(self, T):
         gA = self.dHfA * (1.0 - T / self.TmA) if math.isfinite(self.TmA) else 0.0
@@ -48,18 +49,18 @@ class RegularPhase:
     def G(self, x, T):
         gA, gB = self._pure(T)
         return ((1.0 - x) * gA + x * gB + R * T * mix_entropy(x)
-                + x * (1.0 - x) * (self.L0 + self.L1 * (2.0 * x - 1.0)))
+                + x * (1.0 - x) * ((self.L0 + self.L0T * T) + (self.L1 + self.L1T * T) * (2.0 * x - 1.0)))
 
     def dG(self, x, T):
         gA, gB = self._pure(T)
         xm = clip(x, 1e-9, 1.0 - 1e-9)
         return (gB - gA + R * T * math.log(xm / (1.0 - xm))
-                + (1.0 - 2.0 * x) * (self.L0 + self.L1 * (2.0 * x - 1.0))
-                + 2.0 * self.L1 * x * (1.0 - x))
+                + (1.0 - 2.0 * x) * ((self.L0 + self.L0T * T) + (self.L1 + self.L1T * T) * (2.0 * x - 1.0))
+                + 2.0 * (self.L1 + self.L1T * T) * x * (1.0 - x))
 
     def d2G(self, x, T):
         xm = clip(x, 1e-9, 1.0 - 1e-9)
-        return R * T / (xm * (1.0 - xm)) - 2.0 * self.L0 + 6.0 * self.L1 * (1.0 - 2.0 * x)
+        return R * T / (xm * (1.0 - xm)) - 2.0 * (self.L0 + self.L0T * T) + 6.0 * (self.L1 + self.L1T * T) * (1.0 - 2.0 * x)
 
     def muA(self, x, T):
         return mu_a(self.G(x, T), self.dG(x, T), x)
