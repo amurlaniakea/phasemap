@@ -34,4 +34,4 @@ from .models.miscibility import MiscibilityGap
 from .models.regular import BinarySystem, RegularPhase
 from .systems.presets import PRESETS, Preset
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"

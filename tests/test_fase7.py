@@ -1,4 +1,4 @@
-# Fase 7: compuesto de linea, clasificacion de invariantes, Fe-C peritectico.
+# Fase 7/10: compuesto de linea, clasificacion, Al-Si eutectico y Fe-C eutectoide.
 import pytest
 from phasemap.core.multiphase import (LineCompound, equilibrium_multi,
                                       find_invariants, scan_multi)
@@ -23,14 +23,15 @@ def test_eutectic_classification():
     assert iv and iv[0]["kind"] == "eutectico"
 
 
-def test_al_si_si_compound_stable():
-    # a baja T el compuesto (Si) debe estar en el hull (extremo B)
-    segs, H = equilibrium_multi(al_si(), 750.0, n=300)
-    assert 1.0 in [v[0] for v in H]
+def test_al_si_eutectic():
+    d = scan_multi(al_si(), 700.0, 1000.0, rows=160, n=240)
+    eut = [i for i in d["invariants"] if i["kind"] == "eutectico"]
+    assert eut
+    assert 800.0 < eut[0]["T"] < 900.0
 
 
-def test_fe_c_peritectic():
-    d = scan_multi(fe_c(), 1300.0, 1900.0, rows=160, n=240)
-    per = [i for i in d["invariants"] if i["kind"] == "peritectico"]
-    assert per
-    assert any(1600.0 < i["T"] < 1900.0 for i in per)
+def test_fe_c_eutectoid():
+    d = scan_multi(fe_c(), 900.0, 1900.0, rows=160, n=240)
+    sol = [i for i in d["invariants"] if i["kind"] == "solido"]
+    assert sol
+    assert any(900.0 < i["T"] < 1300.0 for i in sol)

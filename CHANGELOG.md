@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.3.0
+- Fase 10: Al-Si calibrado por estabilidad de red (sublattice efectivo): eutectico ~850 K / x_Si~0.11. Eutectoide Fe-C (gamma -> alpha + Fe3C) con ferrita alpha. Filtro topologico de invariantes (elimina cruces metaestables).
+
+
 ## v0.2.0
 - Fase 6: sistema Ag-Cu (nucleo, visor, tests, datos) y fix del lienzo eutectico en blanco.
 - Fase 7: motor multifase N-fases, compuestos de linea (LineCompound) y deteccion de invariantes.

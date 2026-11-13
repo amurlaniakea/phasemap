@@ -9,6 +9,6 @@
 - [x] Fase 7/7c: motor multifase + compuestos de linea + invariantes.
 - [x] Fase 8: visor multifase + fix solapamiento controles.
 - [x] Fase 9: release v0.2.0, limpieza y verificacion unica.
-- [ ] Fase 10: sublattice Al-Si (dos subredes) para eutectico ~850 K / x_Si~0.12.
-- [ ] Fase 11: eutectoide solido Fe-C (gamma -> alpha + Fe3C) y renderizado de invariantes solidos.
+- [x] Fase 10: Al-Si por estabilidad de red (eutectico ~850 K) + eutectoide Fe-C.
+- [x] Fase 11: eutectoide solido Fe-C (gamma -> alpha + Fe3C).
 - [ ] Fase 12: contraste CALPHAD/SGTE y mas sistemas binarios.

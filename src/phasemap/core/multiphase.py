@@ -123,23 +123,31 @@ def _margin(phases, b, a, c, T, n):
     return bm
 
 
+def _present(phases, T, n):
+    segs, H = equilibrium_multi(phases, T, n)
+    return frozenset(v[2] for v in H)
+
+
 def scan_multi(phases, Tmin, Tmax, rows=240, n=400):
-    dT = (Tmax - Tmin) / (rows - 1); inv = []; rows_out = []
+    dT = (Tmax - Tmin) / (rows - 1)
+    inv, rows_out, pres = [], [], []
     for r in range(rows):
         T = Tmax - r * dT
         segs, H = equilibrium_multi(phases, T, n)
         rows_out.append((T, segs))
+        pres.append(frozenset(v[2] for v in H))
     for b in range(len(phases)):
         for a, c in itertools.combinations([k for k in range(len(phases)) if k != b], 2):
-            prev = None; prevT = None
-            for (T, segs) in rows_out:
+            prev = None; prevT = None; prevP = None
+            for r in range(rows):
+                T = rows_out[r][0]
                 bm = _margin(phases, b, a, c, T, n); m = bm[0] if bm else 1e9
-                if prev is not None and (prev > 0) != (m > 0) and bm:
+                if prev is not None and (prev > 0) != (m > 0) and bm and prevP != pres[r]:
                     f = prev / (prev - m); Ti = prevT + f * (T - prevT)
                     la, lb, lc = _lab(phases[a]), _lab(phases[b]), _lab(phases[c])
                     kind = "eutectico" if lb == "L" else ("peritectico" if "L" in (la, lc) else "solido")
                     inv.append({"T": Ti, "kind": kind, "phases": tuple(sorted((la, lc))) + (lb,), "x": bm[1]})
-                prev = m; prevT = T
+                prev = m; prevT = T; prevP = pres[r]
     inv.sort(key=lambda d: -d["T"])
     out = []
     for iv in inv:
