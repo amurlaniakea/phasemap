@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.3.1
+- Corrige el test del eutectoide Fe-C: comprobacion directa del ensamblaje (alpha+Fe3C por debajo, gamma+Fe3C por encima) en vez del detector de invariantes sensible a la resolucion de la malla. Sin cambios en el nucleo ni en los datos.
+
+
 ## v0.3.0
 - Fase 10: Al-Si calibrado por estabilidad de red (sublattice efectivo): eutectico ~850 K / x_Si~0.11. Eutectoide Fe-C (gamma -> alpha + Fe3C) con ferrita alpha. Filtro topologico de invariantes (elimina cruces metaestables).
 

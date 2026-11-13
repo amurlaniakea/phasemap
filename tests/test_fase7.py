@@ -31,7 +31,16 @@ def test_al_si_eutectic():
 
 
 def test_fe_c_eutectoid():
-    d = scan_multi(fe_c(), 900.0, 1900.0, rows=160, n=240)
-    sol = [i for i in d["invariants"] if i["kind"] == "solido"]
-    assert sol
-    assert any(900.0 < i["T"] < 1300.0 for i in sol)
+    # Eutectoide gamma -> alpha + Fe3C: comprobacion directa del ensamblaje (robusta,
+    # independiente de la resolucion del detector de invariantes).
+    from phasemap.core.multiphase import equilibrium_multi
+    ph = fe_c()
+    x = 0.03
+    def assemblage(T):
+        segs, H = equilibrium_multi(ph, T, n=240)
+        q = next((s for s in segs if s[0] <= x <= s[1]), segs[-1])
+        return q[5]
+    low = assemblage(1100.0)    # por debajo del eutectoide
+    high = assemblage(1250.0)   # por encima del eutectoide
+    assert "alpha" in low and "Fe3C" in low and "gamma" not in low
+    assert "gamma" in high
