@@ -16,7 +16,7 @@ Serie cientifica: **Orbitae · Relmap · Phasemap**.
 > El equilibrio de fases no se dibuja: se minimiza. Tangentes comunes sobre la
 > envolvente convexa de G(x), refinadas con Newton hasta |Δμ| < 1e-7 J/mol.
 
-## Resultados verificados (scripts/build_data.py)
+    scripts/                build_data, build_data_fase7, build_assessment, verify_release
 
 | Sistema | Magnitud | Modelo | Referencia | Desv. |
 |---|---|---|---|---|
@@ -44,22 +44,21 @@ binodal/espinodal, Wagner/IAPWS, Clausius-Clapeyron. Limites: docs/limits.md.
     pip install -e ".[dev]"
     python -m pytest -q
     python -m phasemap
-    python scripts/build_data.py
+    scripts/                build_data, build_data_fase7, build_assessment, verify_release
 
 ## Estructura
 
-    src/phasemap/core/      Gibbs, hull convexo, Newton mu, palanca, scan T-x
-    src/phasemap/models/    regular + RK, lacuna, agua IAPWS
-    src/phasemap/systems/   Pb-Sn, Cu-Ni, generico (refs ASM)
+    src/phasemap/core/      gibbs, hull, equilibrium (Newton), multiphase (N fases + invariantes)
+    src/phasemap/models/    regular + RK (L0T/L1T), miscibility, water (IAPWS/Wagner)
+    src/phasemap/systems/   presets (Pb-Sn, Cu-Ni, Ag-Cu), compounds (Al-Si, Fe-C), references
     tests/                  79 tests analiticos
-    scripts/build_data.py   Fase 4: data/ + docs/limits.md
-    web/                    visor Canvas 0-deps (Fase 3)
-    docs/                   theory.md + limits.md
+    scripts/                build_data, build_data_fase7, build_assessment, verify_release
+    web/                    index.html (2 fases) + multifase.html — Canvas 0-deps, ES/EN
+    docs/                   theory, limits, assessment, roadmap
 
 ## Licencia
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24205629.svg)](https://doi.org/10.5281/zenodo.24205629)
 
 Este proyecto se distribuye bajo la licencia **AGPL-3.0-or-later** (GNU Affero General Public License versión 3 o posterior). Ver el archivo [`LICENSE`](LICENSE) para el texto legal completo.
 
