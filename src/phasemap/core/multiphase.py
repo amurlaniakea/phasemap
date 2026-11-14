@@ -154,3 +154,33 @@ def scan_multi(phases, Tmin, Tmax, rows=240, n=400):
         if not out or iv["phases"] != out[-1]["phases"] or abs(iv["T"] - out[-1]["T"]) > 20:
             out.append(iv)
     return {"rows": rows_out, "invariants": out, "Tmin": Tmin, "Tmax": Tmax}
+
+
+def invariants_section(phases, Tmin, Tmax, xmax=0.25, xe=0.034, rows=260, n=340,
+                       liquid="L", high_solid="delta", low_solid="alpha"):
+    """Invariantes por cambio de ensamblaje en una seccion [0, xmax].
+
+    Robusto frente a la resolucion de la malla (no depende de colinealidad):
+      - peritectico: desaparece el solido de alta T con liquido presente,
+      - eutectico: desaparece el liquido dentro de la seccion,
+      - eutectoide: aparece el solido de baja T sin liquido en xe.
+    Pensado para secciones con compuesto de linea (Fe-Fe3C, x <= 0.25).
+    """
+    dT = (Tmax - Tmin) / (rows - 1)
+    prevL = prevD = False
+    out = {}
+    for r in range(rows):
+        T = Tmax - r * dT
+        segs, H = equilibrium_multi(phases, T, n)
+        L = any((not s[4]) and s[5] == liquid and s[0] < xmax for s in segs)
+        D = any((not s[4]) and s[5] == high_solid and s[0] < xmax for s in segs)
+        q = next((s for s in segs if s[0] <= xe <= s[1]), segs[-1])
+        A = q[5]
+        if prevD and not D and L and "peritectico" not in out:
+            out["peritectico"] = T
+        if prevL and not L and "eutectico" not in out:
+            out["eutectico"] = T
+        if "eutectoide" not in out and low_solid in A and liquid not in A:
+            out["eutectoide"] = T
+        prevL, prevD = L, D
+    return out

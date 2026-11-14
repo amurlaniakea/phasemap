@@ -26,11 +26,13 @@ eut = [i for i in d["invariants"] if i["kind"] == "eutectico"]
 if eut:
     add("alsi", "eutectic_T_K", eut[0]["T"], ASSESSED["alsi"]["eutectic_T_K"], ASSESSED["alsi"]["src"])
     add("alsi", "eutectic_x", eut[0]["x"], ASSESSED["alsi"]["eutectic_x"], ASSESSED["alsi"]["src"])
-d = scan_multi(fe_c(), 900, 1900, rows=240, n=300)
-per = [i for i in d["invariants"] if i["kind"] == "peritectico"]
-sol = [i for i in d["invariants"] if i["kind"] == "solido"]
-if per: add("fec", "peritectic_T_K", per[0]["T"], ASSESSED["fec"]["peritectic_T_K"], ASSESSED["fec"]["src"])
-if sol: add("fec", "eutectoid_T_K", sol[0]["T"], ASSESSED["fec"]["eutectoid_T_K"], ASSESSED["fec"]["src"])
+from phasemap.core.multiphase import invariants_section
+iv = invariants_section(fe_c(), 900.0, 1900.0, xmax=0.25, xe=0.034, rows=260, n=340)
+for key, ref in (("peritectico", "peritectic_T_K"),
+                 ("eutectico", "eutectic_T_K"),
+                 ("eutectoide", "eutectoid_T_K")):
+    if key in iv:
+        add("fec", ref, iv[key], ASSESSED["fec"][ref], ASSESSED["fec"]["src"])
 add("water", "triple_T_K", w.Tt, ASSESSED["water"]["triple_T_K"], ASSESSED["water"]["src"])
 add("water", "critical_T_K", w.Tc, ASSESSED["water"]["critical_T_K"], ASSESSED["water"]["src"])
 with open(os.path.join(DATA, "assessment.csv"), "w", newline="") as f:
