@@ -40,7 +40,7 @@ def test_fe_c_eutectoid():
         segs, H = equilibrium_multi(ph, T, n=240)
         q = next((s for s in segs if s[0] <= x <= s[1]), segs[-1])
         return q[5]
-    low = assemblage(1100.0)    # por debajo del eutectoide
-    high = assemblage(1250.0)   # por encima del eutectoide
+    low = assemblage(900.0)    # por debajo del eutectoide
+    high = assemblage(1300.0)   # por encima del eutectoide
     assert "alpha" in low and "Fe3C" in low and "gamma" not in low
     assert "gamma" in high

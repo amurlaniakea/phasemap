@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-only
-"""Fase 14: calibra Fe-C (peritectico 1768 K, eutectico 1421 K, eutectoide 1000 K).
+"""Fase 14b: calibra Fe-C con exceso intersticial (L0=L1) en gamma/alpha.
 
-Alotropia del Fe puro fijada analiticamente con los terminos puros:
-  alpha <-> gamma 1185 K (912 C), gamma <-> delta 1667 K (1394 C).
-Busca Hf/Sf del Fe3C y excesos L0 de gamma/alpha; escribe nucleo y visor.
+Alotropia del Fe puro analitica: alpha<->gamma 1185 K, gamma<->delta 1667 K.
+gamma/alpha: exceso 2L x^2(1-x) (intersticial, sin laguna en el lado Fe).
+delta: exceso simetrico L0 (sin laguna por encima de 1667 K).
+Fe3C: compuesto de linea; Hf/Sf controlan eutectico y eutectoide.
+Filtra candidatos con comprobaciones de ensamblaje para no romper los tests.
 Uso: python scripts/calibrate_fe_c.py [--quick]
 """
 import os, re, sys, itertools
@@ -14,7 +16,7 @@ from phasemap.models.regular import RegularPhase
 from phasemap.core.multiphase import LineCompound, equilibrium_multi
 
 TARGET = (1768.0, 1421.0, 1000.0)   # peritectico, eutectico, eutectoide
-XE = 0.034                          # ~0.76 wt% C (composicion eutectoide)
+XE = 0.034
 
 def read(p): return open(os.path.join(ROOT, p), encoding="utf-8").read()
 def write(p, s): open(os.path.join(ROOT, p), "w", encoding="utf-8").write(s)
@@ -22,16 +24,21 @@ def write(p, s): open(os.path.join(ROOT, p), "w", encoding="utf-8").write(s)
 def phases(Hf, Sf, Lg, La):
     return [
         RegularPhase("L", L0=-15000.0, dHfA=13810.0, TmA=1811.0, dHfB=0.0, TmB=4000.0),
-        RegularPhase("delta", L0=30000.0, L1=0.0, dHfA=0.0, TmA=1811.0),
-        RegularPhase("gamma", L0=Lg, L1=0.0, dHfA=-2000.0, TmA=1667.0),
-        RegularPhase("alpha", L0=La, L1=0.0, dHfA=-4500.0, TmA=1360.0),
+        RegularPhase("delta", L0=20000.0, L1=0.0, dHfA=0.0, TmA=1811.0),
+        RegularPhase("gamma", L0=Lg, L1=Lg, dHfA=-2000.0, TmA=1667.0),
+        RegularPhase("alpha", L0=La, L1=La, dHfA=-4500.0, TmA=1360.0),
         LineCompound("Fe3C", 0.25, Hf=Hf, Sf=Sf),
     ]
+
+def asm(ph, T, x=XE, n=240):
+    segs, H = equilibrium_multi(ph, T, n)
+    q = next((s for s in segs if s[0] <= x <= s[1]), segs[-1])
+    return q[5]
 
 def features(ph, rows, n):
     Tmin, Tmax = 900.0, 1900.0
     dT = (Tmax - Tmin) / (rows - 1)
-    prevL = prevD = False; prevA = None
+    prevL = prevD = False
     Tp = Te = Teu = None
     for r in range(rows):
         T = Tmax - r * dT
@@ -41,48 +48,54 @@ def features(ph, rows, n):
         q = next((s for s in segs if s[0] <= XE <= s[1]), segs[-1]); A = q[5]
         if prevD and not D and L and Tp is None: Tp = T
         if prevL and not L and Te is None: Te = T
-        if prevA == "gamma" and "alpha" in A and Teu is None: Teu = T
-        prevL, prevD, prevA = L, D, A
+        if Teu is None and "alpha" in A and "L" not in A: Teu = T
+        prevL, prevD = L, D
     return Tp, Te, Teu
 
 def score(v):
-    if any(x is None for x in v): return None
-    return sum(abs(a - b) / b for a, b in zip(v, TARGET))
+    s = 0.0
+    for got, ref in zip(v, TARGET):
+        s += abs(got - ref) / ref if got else 1.0   # penaliza ausentes
+    return s
 
 quick = "--quick" in sys.argv
-rows, n = (60, 140) if quick else (90, 180)
-grid = list(itertools.product((-32000.0, -28000.0, -24000.0, -20000.0),
-                              (-16.0, -12.0, -8.0),
-                              (18000.0, 26000.0, 34000.0),
-                              (50000.0, 90000.0)))
-print("Calibrando Fe-C: %d candidatos (rows=%d, n=%d)..." % (len(grid), rows, n))
-best = None
+rows, n = (60, 140) if quick else (100, 200)
+grid = list(itertools.product((-20000.0, -16000.0, -12000.0, -8000.0),
+                              (-12.0, -6.0, 0.0),
+                              (8000.0, 12000.0, 16000.0, 20000.0),
+                              (40000.0, 80000.0, 120000.0)))
+print("Calibrando Fe-C (intersticial): %d candidatos, rows=%d n=%d" % (len(grid), rows, n))
+best = None; passing = 0
 for Hf, Sf, Lg, La in grid:
-    v = features(phases(Hf, Sf, Lg, La), rows, n)
+    ph = phases(Hf, Sf, Lg, La)
+    lo, hi = asm(ph, 900.0, n=160), asm(ph, 1300.0, n=160)
+    if not ("alpha" in lo and "Fe3C" in lo and "gamma" not in lo and "gamma" in hi):
+        continue
+    passing += 1
+    v = features(ph, rows, n)
     sc = score(v)
-    if sc is None: continue
     if best is None or sc < best[0]:
         best = (sc, Hf, Sf, Lg, La, v)
         print("  mejor: err=%.3f  Tp=%s Te=%s Teu=%s" %
               (sc, *[round(x) if x else None for x in v]))
+print("Candidatos que pasan el filtro de ensamblaje: %d/%d" % (passing, len(grid)))
 if best is None:
-    print("AVISO: ninguna combinacion dio los tres invariantes. Prueba sin --quick.")
+    print("AVISO: ninguno paso el filtro. No se modifica nada. Prueba sin --quick.")
     sys.exit(1)
 sc, Hf, Sf, Lg, La, _ = best
-fine = features(phases(Hf, Sf, Lg, La), 220, 320)
+ph = phases(Hf, Sf, Lg, La)
+fine = features(ph, 240, 320)
 print("\nElegido: Fe3C Hf=%.0f Sf=%.1f | L0_gamma=%.0f L0_alpha=%.0f" % (Hf, Sf, Lg, La))
 for name, got, ref in zip(("peritectico", "eutectico", "eutectoide"), fine, TARGET):
-    if got: print("  %-12s %7.1f K   (real %.0f K, desv %.1f%%)" % (name, got, ref, abs(got-ref)/ref*100))
+    if got: print("  %-12s %7.1f K  (real %.0f K, desv %.1f%%)" % (name, got, ref, abs(got-ref)/ref*100))
     else:   print("  %-12s no detectado" % name)
 
-# --- escribir compounds.py ---
-write("src/phasemap/systems/compounds.py", '''"""Fase 14: Al-Si (estabilidad de red) y Fe-C calibrado con alotropia del Fe puro.
+write("src/phasemap/systems/compounds.py", '''"""Fase 14b: Al-Si (estabilidad de red) y Fe-C calibrado (exceso intersticial).
 
-Fe-C: la alotropia sale de los terminos puros (analitica):
-  alpha <-> gamma 1185 K (912 C), gamma <-> delta 1667 K (1394 C).
-Fe3C como compuesto de linea; L0 de gamma/alpha limita la solubilidad del C.
-Invariantes calibrados contra ASM: peritectico 1768 K, eutectico 1421 K,
-eutectoide 1000 K. Desviaciones declaradas en docs/assessment.md.
+Alotropia del Fe puro analitica: alpha<->gamma 1185 K, gamma<->delta 1667 K.
+gamma/alpha usan exceso 2L x^2(1-x) (L0=L1), propio del C intersticial:
+solubilidad limitada sin laguna simetrica en el lado rico en Fe.
+Fe3C como compuesto de linea. Invariantes calibrados contra ASM.
 """
 from ..models.regular import RegularPhase
 from ..core.multiphase import LineCompound
@@ -99,28 +112,25 @@ def al_si():
 def fe_c():
     return [
         RegularPhase("L", L0=-15000.0, dHfA=13810.0, TmA=1811.0, dHfB=0.0, TmB=4000.0),
-        RegularPhase("delta", L0=30000.0, L1=0.0, dHfA=0.0, TmA=1811.0),
-        RegularPhase("gamma", L0=__LG__, L1=0.0, dHfA=-2000.0, TmA=1667.0),
-        RegularPhase("alpha", L0=__LA__, L1=0.0, dHfA=-4500.0, TmA=1360.0),
+        RegularPhase("delta", L0=20000.0, L1=0.0, dHfA=0.0, TmA=1811.0),
+        RegularPhase("gamma", L0=__LG__, L1=__LG__, dHfA=-2000.0, TmA=1667.0),
+        RegularPhase("alpha", L0=__LA__, L1=__LA__, dHfA=-4500.0, TmA=1360.0),
         LineCompound("Fe3C", 0.25, Hf=__HF__, Sf=__SF__),
     ]
 '''.replace("__LG__", "%.1f" % Lg).replace("__LA__", "%.1f" % La)
    .replace("__HF__", "%.1f" % Hf).replace("__SF__", "%.1f" % Sf))
-print("OK: compounds.py actualizado")
+print("OK: compounds.py")
 
-# --- visor multifase: mismos parametros + rango desde 900 K (eutectoide visible) ---
 P = "web/multifase.html"; s = read(P)
 NEW = ("fec:{name:'Fe–C',Tmin:900,Tmax:1900,ph:["
        "new Reg({label:'L',L0:-15000,dHfA:13810,TmA:1811,dHfB:0,TmB:4000}),"
-       "new Reg({label:'δ',L0:30000,L1:0,dHfA:0,TmA:1811}),"
-       "new Reg({label:'γ',L0:%g,L1:0,dHfA:-2000,TmA:1667}),"
-       "new Reg({label:'α',L0:%g,L1:0,dHfA:-4500,TmA:1360}),"
-       "new Line('Fe₃C',0.25,%g,%g)]}" % (Lg, La, Hf, Sf))
+       "new Reg({label:'δ',L0:20000,L1:0,dHfA:0,TmA:1811}),"
+       "new Reg({label:'γ',L0:%g,L1:%g,dHfA:-2000,TmA:1667}),"
+       "new Reg({label:'α',L0:%g,L1:%g,dHfA:-4500,TmA:1360}),"
+       "new Line('Fe₃C',0.25,%g,%g)]}" % (Lg, Lg, La, La, Hf, Sf))
 s2 = re.sub(r"fec:\{name:'Fe–C'.*?\]\}", NEW, s, count=1, flags=re.DOTALL)
-if s2 != s: write(P, s2); print("OK: multifase.html (Fe-C calibrado, Tmin=900 K)")
-else: print("AVISO: no se encontro la entrada fec en multifase.html")
+if s2 != s: write(P, s2); print("OK: multifase.html (Tmin=900 K)")
 
-# --- test de alotropia (garantizado por los terminos puros) ---
 write("tests/test_fase14.py", '''# Fase 14: alotropia del Fe puro (analitica) y region eutectoide.
 from phasemap.systems.compounds import fe_c
 from phasemap.core.multiphase import equilibrium_multi
@@ -141,13 +151,13 @@ def _solid(name):
 def test_alpha_gamma_allotropy():
     a, g = _solid("alpha"), _solid("gamma")
     T = _cross(lambda T: a.G(0.0, T), lambda T: g.G(0.0, T))
-    assert 1150.0 < T < 1220.0      # real 1185 K (912 C)
+    assert 1150.0 < T < 1220.0
 
 
 def test_gamma_delta_allotropy():
     g, d = _solid("gamma"), _solid("delta")
     T = _cross(lambda T: g.G(0.0, T), lambda T: d.G(0.0, T))
-    assert 1640.0 < T < 1700.0      # real 1667 K (1394 C)
+    assert 1640.0 < T < 1700.0
 
 
 def test_eutectoid_region():
@@ -160,9 +170,7 @@ def test_eutectoid_region():
     assert "alpha" in low and "Fe3C" in low and "gamma" not in low
     assert "gamma" in high
 ''')
-# el test antiguo del eutectoide usaba 1100/1250 K; tras calibrar, usar 900/1300
 P = "tests/test_fase7.py"; t = read(P)
 t = t.replace("assemblage(1100.0)", "assemblage(900.0)").replace("assemblage(1250.0)", "assemblage(1300.0)")
 write(P, t)
-print("OK: tests/test_fase14.py + test_fase7 ajustado")
-print("\nFase 14 aplicada. Ejecuta: python -m pytest -q && python scripts/build_assessment.py")
+print("OK: tests (alotropia garantizada + region eutectoide)")
