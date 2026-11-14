@@ -59,8 +59,8 @@ quick = "--quick" in sys.argv
 rows, n = (60, 140) if quick else (100, 200)
 grid = list(itertools.product((-24000.0, -20000.0, -16000.0),
                               (-16.0, -12.0, -8.0),
-                              (9000.0, 10000.0, 11000.0, 12000.0),
-                              (80000.0, 120000.0, 200000.0)))
+                              (5000.0, 6500.0, 8000.0, 9000.0),
+                              (200000.0, 400000.0, 800000.0)))
 print("Calibrando Fe-C (seccion x<=%.2f): %d candidatos, rows=%d n=%d" % (XMAX, len(grid), rows, n))
 best = None; passing = 0
 for Hf, Sf, Lg, La in grid:

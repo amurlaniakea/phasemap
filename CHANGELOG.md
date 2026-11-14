@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.5.0
+- Fe-C calibrado en la seccion Fe-Fe3C: alotropia del Fe puro analitica (alpha<->gamma 1185 K, gamma<->delta 1667 K), exceso intersticial en gamma/alpha, y los tres invariantes (peritectico, eutectico, eutectoide) en el assessment.
+- invariants_section() en el nucleo: detector robusto por cambio de ensamblaje.
+- Visor multifase: composicion de invariantes, export CSV/JSON y tabla de limites.
+- 83 tests. README y page sincronizados con el assessment real.
+
+
 ## v0.4.0
 - Fase 12 cientifica: Redlich-Kister dependiente de T (L0T/L1T, forma G=a+bT de CALPHAD/SGTE). Modulo de referencias assessed (Massalski/ASM, IAPWS) e informe de assessment sistematico (data/assessment.csv + docs/assessment.md). Citacion Zenodo (CITATION.cff + .zenodo.json).
 

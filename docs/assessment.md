@@ -10,7 +10,7 @@
 | alsi | eutectic_x | 0.1133 | 0.122 | 7.10 | ASM: 577 C, 12.6 wt% Si |
 | fec | peritectic_T_K | 1715 | 1768 | 3.02 | ASM (Fe-Fe3C metaestable): 1495 C, 1148 C, 727 C |
 | fec | eutectic_T_K | 1448 | 1421 | 1.92 | ASM (Fe-Fe3C metaestable): 1495 C, 1148 C, 727 C |
-| fec | eutectoid_T_K | 1112 | 1000 | 11.24 | ASM (Fe-Fe3C metaestable): 1495 C, 1148 C, 727 C |
+| fec | eutectoid_T_K | 1074 | 1000 | 7.37 | ASM (Fe-Fe3C metaestable): 1495 C, 1148 C, 727 C |
 | water | triple_T_K | 273.2 | 273.2 | 0.00 | IAPWS R14-08 / Wagner |
 | water | critical_T_K | 647.1 | 647.1 | 0.00 | IAPWS R14-08 / Wagner |
 

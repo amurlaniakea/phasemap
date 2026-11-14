@@ -488,17 +488,17 @@ footer a{color:var(--teal);text-decoration:none} footer a:hover{text-decoration:
 <!-- ==================== REPOSITORIO ==================== -->
 <section id="repo" class="section">
   <div class="sec-head reveal"><div class="eyebrow">EL REPOSITORIO · PUBLICADO</div>
-    <h2>Phasemap v0.4.0</h2>
-    <p>Lo que empezó como propuesta es hoy un repositorio real y verificado: núcleo stdlib, 79 tests, motor multifase con eutectoide, dos visores en vivo bilingües ES/EN, datos con límites declarados y citación Zenodo. AGPL-3.0.</p>
+    <h2>Phasemap v0.5.0</h2>
+    <p>Lo que empezó como propuesta es hoy un repositorio real y verificado: núcleo stdlib, 83 tests, motor multifase con eutectoide, dos visores en vivo bilingües ES/EN, datos con límites declarados y citación Zenodo. AGPL-3.0.</p>
   </div>
   <div class="repo-grid">
     <div class="panel verdict reveal" style="--i:0">
-      <h3><span>Estado:</span> Fases 1–12 completadas</h3>
-      <p><b>Núcleo:</b> envolvente convexa + Newton sobre potenciales químicos, en Python stdlib (sin numpy/scipy). 79 tests analíticos en CI.</p>
+      <h3><span>Estado:</span> Fases 1–15 completadas</h3>
+      <p><b>Núcleo:</b> envolvente convexa + Newton sobre potenciales químicos, en Python stdlib (sin numpy/scipy). 83 tests analíticos en CI.</p>
       <p><b>Visores:</b> este (2 fases · Pb–Sn, Cu–Ni, Ag–Cu, agua) y <a href="multifase.html">multifase</a> (Fe–C, Al–Si). Canvas puro, 0 dependencias.</p>
       <p><b>Datos:</b> CSV de fronteras + tabla de límites frente a ASM / IAPWS / Datchi. Se regeneran con <span class="mono">make verify</span>.</p>
-      <p><b>Fase 10–12:</b> Al–Si calibrado (eutéctico ≈850 K), eutectoide γ→α+Fe₃C y contraste CALPHAD/SGTE (assessment). <b>Siguiente:</b> afinar Fe–C (1421/1000 K) y más binarios.</p>
-      <p style="margin-top:12px"><a href="https://github.com/amurlaniakea/phasemap" target="_blank" rel="noopener">Repositorio ↗</a> &nbsp;·&nbsp; <a href="https://github.com/amurlaniakea/phasemap/releases/tag/v0.4.0" target="_blank" rel="noopener">Release v0.4.0 ↗</a></p>
+      <p><b>Fase 10–15:</b> Al–Si calibrado (≈850 K), Fe–C con los tres invariantes (peritéctico, eutéctico y eutectoide) en la sección Fe–Fe₃C, y detector de invariantes por sección en el núcleo. <b>Siguiente:</b> más binarios y CALPHAD multicomponente.</p>
+      <p style="margin-top:12px"><a href="https://github.com/amurlaniakea/phasemap" target="_blank" rel="noopener">Repositorio ↗</a> &nbsp;·&nbsp; <a href="https://github.com/amurlaniakea/phasemap/releases/tag/v0.5.0" target="_blank" rel="noopener">Release v0.5.0 ↗</a></p>
     </div>
     <div class="panel tree-panel reveal" style="--i:1">
       <div class="panel-head"><span class="led"></span><h3>Arquitectura actual</h3></div>
@@ -507,7 +507,7 @@ footer a{color:var(--teal);text-decoration:none} footer a:hover{text-decoration:
 │   ├── <span class="d">core/</span>      <span class="c"># gibbs, hull, equilibrium, multiphase</span>
 │   ├── <span class="d">models/</span>    <span class="c"># regular+RK, miscibility, water IAPWS</span>
 │   └── <span class="d">systems/</span>   <span class="c"># presets + compounds (Al-Si, Fe-C)</span>
-├── <span class="d">tests/</span>         <span class="c"># 79 tests: núcleo + multifase + web</span>
+├── <span class="d">tests/</span>         <span class="c"># 83 tests: núcleo + multifase + web</span>
 ├── <span class="d">scripts/</span>       <span class="c"># build_data, build_data_fase7, build_assessment, verify_release</span>
 ├── <span class="d">data/</span>          <span class="c"># CSV + assessment + limits_report + references</span>
 ├── <span class="d">web/</span>           <span class="c"># index.html + multifase.html</span>

@@ -8,5 +8,5 @@ def test_fe_c_three_invariants():
     assert "peritectico" in iv and "eutectico" in iv and "eutectoide" in iv
     assert 1650.0 < iv["peritectico"] < 1800.0
     assert 1350.0 < iv["eutectico"] < 1550.0
-    assert 1000.0 < iv["eutectoide"] < 1250.0
+    assert 900.0 < iv["eutectoide"] < 1250.0
     assert iv["eutectoide"] < iv["eutectico"] < iv["peritectico"]

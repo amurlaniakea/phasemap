@@ -30,7 +30,7 @@ Serie cientifica: **Orbitae · Relmap · Phasemap**.
 | H2O | Fusion VII 751.5 K | 13.09 GPa | Datchi 2000 | ancla exacta |
 | Lacuna | T_c = Ω/2R | 1082.5 K | analitico | 0 % |
 
-79 tests: derivadas, Gibbs-Duhem, tangentes comunes, palanca, regla de fases,
+83 tests: derivadas, Gibbs-Duhem, tangentes comunes, palanca, regla de fases,
 binodal/espinodal, Wagner/IAPWS, Clausius-Clapeyron. Limites: docs/limits.md.
 
 ## Visores
@@ -51,7 +51,7 @@ binodal/espinodal, Wagner/IAPWS, Clausius-Clapeyron. Limites: docs/limits.md.
     src/phasemap/core/      gibbs, hull, equilibrium (Newton), multiphase (N fases + invariantes)
     src/phasemap/models/    regular + RK (L0T/L1T), miscibility, water (IAPWS/Wagner)
     src/phasemap/systems/   presets (Pb-Sn, Cu-Ni, Ag-Cu), compounds (Al-Si, Fe-C), references
-    tests/                  79 tests analiticos
+    tests/                  83 tests analiticos
     scripts/                build_data, build_data_fase7, build_assessment, verify_release
     web/                    index.html (2 fases) + multifase.html — Canvas 0-deps, ES/EN
     docs/                   theory, limits, assessment, roadmap

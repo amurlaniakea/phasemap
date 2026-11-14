@@ -22,6 +22,6 @@ def fe_c():
         RegularPhase("L", L0=-15000.0, dHfA=13810.0, TmA=1811.0, dHfB=0.0, TmB=4000.0),
         RegularPhase("delta", L0=20000.0, L1=0.0, dHfA=0.0, TmA=1811.0),
         RegularPhase("gamma", L0=9000.0, L1=9000.0, dHfA=-2000.0, TmA=1667.0),
-        RegularPhase("alpha", L0=200000.0, L1=200000.0, dHfA=-4500.0, TmA=1360.0),
+        RegularPhase("alpha", L0=800000.0, L1=800000.0, dHfA=-4500.0, TmA=1360.0),
         LineCompound("Fe3C", 0.25, Hf=-24000.0, Sf=-16.0),
     ]

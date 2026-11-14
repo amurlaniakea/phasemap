@@ -12,3 +12,6 @@
 - [x] Fase 10: Al-Si por estabilidad de red (eutectico ~850 K) + eutectoide Fe-C.
 - [x] Fase 11: eutectoide solido Fe-C (gamma -> alpha + Fe3C).
 - [ ] Fase 12: contraste CALPHAD/SGTE y mas sistemas binarios.
+- [x] Fase 13: visor multifase (invariantes x, CSV/JSON, limites).
+- [x] Fase 14: Fe-C calibrado (alotropia + seccion Fe-Fe3C).
+- [x] Fase 15: invariants_section en el nucleo + assessment completo.
