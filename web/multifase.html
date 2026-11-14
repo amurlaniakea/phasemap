@@ -82,7 +82,7 @@ const mix=x=>{x=Math.min(Math.max(x,1e-12),1-1e-12);return x*Math.log(x)+(1-x)*M
 class Reg{constructor(o){Object.assign(this,o);}G(x,T){const gA=this.dHfA?this.dHfA*(1-T/this.TmA):0,gB=this.dHfB?this.dHfB*(1-T/this.TmB):0;return (1-x)*gA+x*gB+R*T*mix(x)+x*(1-x)*((this.L0||0)+(this.L1||0)*(2*x-1));}sample(T,n){const a=[];for(let i=0;i<=n;i++)a.push([i/n,this.G(i/n,T)]);return a;}}
 class Line{constructor(label,xc,Hf=0,Sf=0){this.label=label;this.xc=xc;this.Hf=Hf;this.Sf=Sf;}sample(T,n){return[[this.xc,this.Hf-T*this.Sf]];}}
 const SYS={
- fec:{name:'Fe–C',Tmin:900,Tmax:1900,ph:[new Reg({label:'L',L0:-15000,dHfA:13810,TmA:1811,dHfB:0,TmB:4000}),new Reg({label:'δ',L0:20000,L1:0,dHfA:0,TmA:1811}),new Reg({label:'γ',L0:12000,L1:12000,dHfA:-2000,TmA:1667}),new Reg({label:'α',L0:120000,L1:120000,dHfA:-4500,TmA:1360}),new Line('Fe₃C',0.25,-20000,-12)]},
+ fec:{name:'Fe–C',Tmin:900,Tmax:1900,xmax:0.25,ph:[new Reg({label:'L',L0:-15000,dHfA:13810,TmA:1811,dHfB:0,TmB:4000}),new Reg({label:'δ',L0:20000,L1:0,dHfA:0,TmA:1811}),new Reg({label:'γ',L0:9000,L1:9000,dHfA:-2000,TmA:1667}),new Reg({label:'α',L0:200000,L1:200000,dHfA:-4500,TmA:1360}),new Line('Fe₃C',0.25,-24000,-16)]},
  alsi:{name:'Al–Si',Tmin:700,Tmax:1750,ph:[new Reg({label:'L',L0:-12000,dHfA:10710,TmA:933.5,dHfB:50210,TmB:1687}),new Reg({label:'(Al)',L0:8000,dHfB:30000,TmB:1e9}),new Line('(Si)',1,0,0)]}
 };
 const COL={'L':'#2456c4','δ':'#c77d1f','γ':'#2e8f77','Fe₃C':'#b0453f','(Al)':'#c77d1f','(Si)':'#5f5fc9','α':'#8f7bff'};

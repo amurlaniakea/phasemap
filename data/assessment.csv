@@ -5,6 +5,6 @@ agcu,eutectic_T_K,1055,1052,0.32,"ASM: 779 C, 28.1 wt% Cu"
 agcu,eutectic_x,0.4258,0.399,6.72,"ASM: 779 C, 28.1 wt% Cu"
 alsi,eutectic_T_K,849.8,850,0.02,"ASM: 577 C, 12.6 wt% Si"
 alsi,eutectic_x,0.1133,0.122,7.10,"ASM: 577 C, 12.6 wt% Si"
-fec,peritectic_T_K,1761,1768,0.39,"ASM (Fe-Fe3C metaestable): 1495 C, 1148 C, 727 C"
+fec,peritectic_T_K,1761,1768,0.38,"ASM (Fe-Fe3C metaestable): 1495 C, 1148 C, 727 C"
 water,triple_T_K,273.2,273.2,0.00,IAPWS R14-08 / Wagner
 water,critical_T_K,647.1,647.1,0.00,IAPWS R14-08 / Wagner

@@ -1,9 +1,9 @@
-"""Fase 14b: Al-Si (estabilidad de red) y Fe-C calibrado (exceso intersticial).
+"""Fase 14c: Al-Si (estabilidad de red) y Fe-C calibrado (seccion Fe-Fe3C).
 
 Alotropia del Fe puro analitica: alpha<->gamma 1185 K, gamma<->delta 1667 K.
-gamma/alpha usan exceso 2L x^2(1-x) (L0=L1), propio del C intersticial:
-solubilidad limitada sin laguna simetrica en el lado rico en Fe.
-Fe3C como compuesto de linea. Invariantes calibrados contra ASM.
+gamma/alpha usan exceso 2L x^2(1-x) (L0=L1), propio del C intersticial.
+El diagrama metaestable se interpreta en la seccion Fe-Fe3C (x <= 0.25).
+Invariantes calibrados contra ASM: 1768 / 1421 / 1000 K.
 """
 from ..models.regular import RegularPhase
 from ..core.multiphase import LineCompound
@@ -21,7 +21,7 @@ def fe_c():
     return [
         RegularPhase("L", L0=-15000.0, dHfA=13810.0, TmA=1811.0, dHfB=0.0, TmB=4000.0),
         RegularPhase("delta", L0=20000.0, L1=0.0, dHfA=0.0, TmA=1811.0),
-        RegularPhase("gamma", L0=12000.0, L1=12000.0, dHfA=-2000.0, TmA=1667.0),
-        RegularPhase("alpha", L0=120000.0, L1=120000.0, dHfA=-4500.0, TmA=1360.0),
-        LineCompound("Fe3C", 0.25, Hf=-20000.0, Sf=-12.0),
+        RegularPhase("gamma", L0=9000.0, L1=9000.0, dHfA=-2000.0, TmA=1667.0),
+        RegularPhase("alpha", L0=200000.0, L1=200000.0, dHfA=-4500.0, TmA=1360.0),
+        LineCompound("Fe3C", 0.25, Hf=-24000.0, Sf=-16.0),
     ]
